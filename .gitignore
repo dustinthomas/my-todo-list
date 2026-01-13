@@ -1,0 +1,37 @@
+# Julia
+Manifest.toml
+
+# Database files (user's personal todo database)
+*.db
+*.db-shm
+*.db-wal
+
+# Temporary files
+tmpclaude-*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+*.ji
+*.so
+*.dll
+*.dylib
+
+# Test coverage
+*.cov
+*.lcov
+
+# Logs
+*.log
+
+# Generated files
+gantt.html
