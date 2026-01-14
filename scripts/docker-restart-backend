@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Restart backend service (useful after major code changes)
+set -e
+echo "Restarting backend container..."
+docker-compose restart backend
+echo "Backend restarted."

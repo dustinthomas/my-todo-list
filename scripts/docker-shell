@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Access interactive shell in backend container
+set -e
+docker-compose exec backend bash

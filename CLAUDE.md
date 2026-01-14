@@ -27,7 +27,7 @@ This is the rulebook for Claude Code sessions working in this repository.
 
 ## Coding Style & Stack
 
-- **Language:** Julia 1.9+
+- **Language:** Julia 1.12+
 - **TUI Framework:** Term.jl (rendering) + TerminalMenus.jl (navigation, stdlib)
 - **Database:** SQLite with SQLite.jl + DBInterface.jl
 - **Testing:** Julia's `Test` stdlib for all tests
@@ -38,6 +38,11 @@ This is the rulebook for Claude Code sessions working in this repository.
   - Docstrings for public functions
   - Follow Julia naming conventions (lowercase with underscores)
 - **Future:** Rasters.jl for wafer visualization (not in Phase 1)
+
+### Julia Version Policy
+- **New projects**: Always use the latest stable Julia release unless a dependency requires a specific version
+- **Existing/production code**: Stick with the version used to build the project until deciding to migrate
+- **Current project**: Julia 1.12+ (latest stable as of Phase 2)
 
 ## Development Workflow
 

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# View container logs
+set -e
+docker-compose logs -f backend

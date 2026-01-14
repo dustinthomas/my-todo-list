@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Stop Docker containers
+set -e
+echo "Stopping todo-list development environment..."
+docker-compose down
+echo "Containers stopped."

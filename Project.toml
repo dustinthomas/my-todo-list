@@ -1,0 +1,10 @@
+name = "TodoList"
+uuid = "7f8c6f20-4e98-4d72-b8e1-8e9f2c3d4a5b"
+authors = ["Dustin Thomas <dustinthomas>"]
+version = "0.1.0"
+
+[deps]
+# Dependencies will be added in Phase 3
+
+[compat]
+julia = "1.12"

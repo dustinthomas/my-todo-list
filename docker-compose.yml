@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: todolist-backend
+    stdin_open: true    # CRITICAL for TUI
+    tty: true           # CRITICAL for TUI
+    volumes:
+      # Source code (hot reload)
+      - ./src:/app/src
+      - ./test:/app/test
+      - ./scripts:/app/scripts
+      - ./Project.toml:/app/Project.toml
+      # User database (Windows home directory)
+      - ${HOME}/.todo-list:/root/.todo-list
+      # Julia depot (persistent packages)
+      - julia-depot:/root/.julia
+    working_dir: /app
+    environment:
+      - JULIA_PROJECT=@.
+      - JULIA_DEPOT_PATH=/root/.julia
+    command: tail -f /dev/null
+
+volumes:
+  julia-depot:
+    name: todolist-julia-depot
