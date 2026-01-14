@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Julia
+Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+deps/deps.jl
+
+# Database
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Documentation
+README.md
+docs/
+plans/
+CLAUDE-WORKFLOW.md
+
+# Claude Code
+.claude/
+tmpclaude-*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Test artifacts
+test/tmp/
+coverage/

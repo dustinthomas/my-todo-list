@@ -4,10 +4,13 @@ This is the rulebook for Claude Code sessions working in this repository.
 
 ## Goals
 
-- Simple, maintainable CLI todo list manager
-- Built primarily with Claude Code assistance
+- Simple, maintainable TUI (Terminal User Interface) todo list manager
+- Interactive terminal interface with keyboard navigation
+- Built primarily with Claude Code assistance following Boris Cherny "Plant" workflow
 - Human role: review, define requirements, approve design decisions
 - Claude role: plan, implement, test, document
+- Docker-first development for work project isolation
+- Future expansion path for wafer tracking with Rasters.jl
 
 ## Hard Rules
 
@@ -25,15 +28,16 @@ This is the rulebook for Claude Code sessions working in this repository.
 ## Coding Style & Stack
 
 - **Language:** Julia 1.9+
+- **TUI Framework:** Term.jl (rendering) + TerminalMenus.jl (navigation, stdlib)
+- **Database:** SQLite with SQLite.jl + DBInterface.jl
 - **Testing:** Julia's `Test` stdlib for all tests
+- **Containerization:** Docker + docker-compose (required for work projects)
 - **Style:**
   - 4 spaces indentation
   - Type annotations for public function signatures
   - Docstrings for public functions
   - Follow Julia naming conventions (lowercase with underscores)
-- **Database:** SQLite with SQLite.jl
-- **CLI:** Comonicon.jl
-- **Visualization:** HTML + Plotly.js (CDN)
+- **Future:** Rasters.jl for wafer visualization (not in Phase 1)
 
 ## Development Workflow
 
@@ -192,12 +196,66 @@ todo init     # Initialize database (first run)
 todo stats    # Show statistics
 ```
 
+## TUI Development Guidelines
+
+### Rendering
+- **Use Term.jl for ALL output**: Panels, tables, styled text
+- **Immediate mode rendering**: Re-render entire screen on each update
+- **Fixed column widths**: Always specify widths for Term.jl tables to prevent misalignment
+- **Component composition**: Build complex screens from reusable components
+
+### Navigation
+- **TerminalMenus.jl patterns**: Use for interactive selection and keyboard input
+- **Standard keys**:
+  - Arrow keys: Navigation
+  - Enter: Select/Confirm
+  - Esc/q: Back/Quit
+  - Letter keys: Quick actions (a=add, e=edit, d=delete, f=filter, etc.)
+- **Consistent across screens**: Same key should do same thing everywhere
+
+### State Management
+- **Separate UI state from data**: Keep AppState struct for UI, database for data
+- **Immutable updates preferred**: Use `@set` macro or return new state
+- **Screen transitions**: Clear state that maintains current screen, selected item, filters
+
+### Testing
+- **Unit test business logic**: Database operations, filtering, data transformations
+- **Component tests**: Verify rendering produces correct output types (Panel, Table)
+- **Content verification**: Test that rendered output contains expected text, not just types
+  ```julia
+  # Good:
+  @test output isa Panel
+  @test contains(string(output), "Todo List")
+
+  # Bad (insufficient):
+  @test output isa Panel  # Type check alone is not enough
+  ```
+- **Manual testing required**: Visual verification of TUI appearance and keyboard navigation
+- **Manual test checklist**: Document expected behavior for manual testing
+
+### Error Handling
+- **Show errors in dedicated panel**: Don't break UI
+- **User-friendly messages**: Avoid stack traces in TUI
+- **Graceful degradation**: If component fails to render, show error panel instead
+
+### Docker Development
+- **All development in Docker**: Required for work projects
+- **docker-compose with TTY**: `stdin_open: true` and `tty: true` required for interactive TUI
+- **Mounted volumes**: Use for live editing (hot reload)
+- **Test in Docker**: Always run `./scripts/docker-test` before committing
+
+### Performance
+- **Efficient screen updates**: Only re-render when state changes
+- **Limit data fetched**: Don't load entire database for displays
+- **Responsive input**: Keyboard handling should feel instant
+
 ## Implementation Notes
 
 - **Windows paths**: Use Julia's `homedir()` and `joinpath()` for cross-platform compatibility
 - **Startup time**: Julia CLI has ~2s startup. For production, consider compiling to binary with PackageCompiler.jl
-- **Gantt charts**: Only include todos with both start_date and due_date
+- **Database**: Always use string keys for SQLite queries (`row["column"]` not `row[:column]`)
 - **Error handling**: Wrap database operations in try-catch blocks with user-friendly error messages
+- **Foreign keys**: Enable with `PRAGMA foreign_keys = ON` immediately after opening connection
 
 ## Lessons Learned
 
