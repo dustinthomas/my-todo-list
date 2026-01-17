@@ -106,6 +106,154 @@ julia --project=. scripts/install.jl
 - Pattern reinforcement: Must read existing code to match style
 - Real-world alignment: Developers rely on tests/docs, not memory
 
+## Work Units (PR-Sized Chunks)
+
+### What is a Work Unit?
+
+A **Work Unit** is a grouping of plan steps that forms a coherent, testable chunk of work:
+- **Self-contained**: Can be implemented, tested, and merged independently
+- **PR-sized**: Results in ONE pull request (typically 1-3 days of work)
+- **Testable**: Has clear acceptance criteria that can be verified
+- **Depends on prior units**: Units are ordered by dependency
+
+### Work Unit Lifecycle
+
+```
+PENDING → IN_PROGRESS → IMPLEMENTED → VERIFIED → MERGED
+                │              │
+                │              └── FAILED → back to IN_PROGRESS
+                │
+                └── BLOCKED (dependency not met)
+```
+
+### Workflow with Work Units
+
+```
+┌──────────────────┐
+│ Feature Spec     │
+│ docs/features/   │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐     ┌─────────────────────────────────────────┐
+│ /plan-feature    │ ──► │ TWO OUTPUTS:                            │
+│ (Planner)        │     │  1. plans/FEATURE.md (detailed steps)   │
+│ READ-ONLY        │     │  2. docs/features/FEATURE-units.md      │
+└──────────────────┘     │     (work units checklist)              │
+                         └────────────────┬────────────────────────┘
+                                          │
+         ┌────────────────────────────────┴────────────────────────┐
+         │                                                         │
+         ▼                                                         ▼
+┌─────────────────────┐                              ┌─────────────────────┐
+│ Unit 1              │                              │ Unit N              │
+│ CLEAR → Implement   │                              │ CLEAR → Implement   │
+│ CLEAR → Verify      │                              │ CLEAR → Verify      │
+│ CLEAR → Ship (PR)   │ ─── ... ───────────────────► │ CLEAR → Ship (PR)   │
+└─────────────────────┘                              └─────────────────────┘
+```
+
+### Key Files
+
+| File | Purpose | Created By |
+|------|---------|------------|
+| `docs/features/FEATURE.md` | Feature specification (requirements) | Human |
+| `plans/FEATURE.md` | Detailed implementation steps | Planner |
+| `docs/features/FEATURE-units.md` | Work units checklist | Planner |
+
+### Commands by Role
+
+| Role | Command | Input | Output |
+|------|---------|-------|--------|
+| Planner | `/plan-feature` | Feature spec | Plan + Work units files |
+| Implementer | `/implement-step UNITS-FILE N` | Work unit N | Code + tests for unit N |
+| Tester | `/verify-feature UNITS-FILE N` | Work unit N | PASS/FAIL report |
+| Refactorer | `/simplify` | File or feature | Improved code |
+| Shipper | `/commit-push-pr` | Branch | Commit + PR |
+
+## Session Isolation Rules
+
+### Core Principle
+
+**Each session = One role, One work unit**
+
+Context MUST be cleared between:
+- Planner → Implementer
+- Implementer → Tester
+- Tester → Implementer (on FAIL)
+- Tester → Shipper (on PASS)
+- Unit N → Unit N+1
+
+### Why Session Isolation?
+
+1. **Fresh context**: Each session gets full token budget
+2. **Clean handoffs**: Work units file tracks state between sessions
+3. **Reduced errors**: No stale context leading to mistakes
+4. **Parallel work**: Different units can be worked on by different sessions
+
+### What Each Session Reads
+
+| Role | Must Read | May Read |
+|------|-----------|----------|
+| Planner | CLAUDE.md, Feature spec | Existing code patterns |
+| Implementer | CLAUDE.md, Work units file, Plan | Source files for unit |
+| Tester | CLAUDE.md, Work units file | Test files, source files |
+| Refactorer | CLAUDE.md, Source files | Tests |
+| Shipper | CLAUDE.md, Git status | Work units file |
+
+### Session Handoff Protocol
+
+**At end of every session:**
+1. Update work units file with current status
+2. Add session log entry with notes
+3. Report next steps explicitly
+4. Tell user: "CLEAR CONTEXT, then run [next command]"
+
+**At start of every session:**
+1. Read CLAUDE.md
+2. Read work units file
+3. Find current unit status
+4. Proceed with appropriate action
+
+## TodoWrite Tool Usage
+
+### When to Use TodoWrite
+
+**USE FOR:** Session-internal progress tracking
+
+```
+Working on Unit 2: Base Components
+
+- [x] Create header.jl
+- [x] Create footer.jl
+- [ ] Create message.jl
+- [ ] Create table.jl
+- [ ] Write tests
+- [ ] Run tests
+```
+
+TodoWrite helps YOU track progress within a single implementation session.
+
+### When NOT to Use TodoWrite
+
+**DON'T USE FOR:** Cross-session planning or state tracking
+
+The work units file (`docs/features/FEATURE-units.md`) is the persistent state tracker.
+TodoWrite is session-scoped and lost on context clear.
+
+| Tracking Need | Use This |
+|---------------|----------|
+| Steps within current session | TodoWrite |
+| Unit status across sessions | Work units file |
+| Overall feature progress | Work units file |
+| Implementation details | Plan file |
+
+### Rule
+
+- **Work units file**: Source of truth for progress
+- **TodoWrite**: Convenience for current session only
+- **Never rely on TodoWrite** surviving context clears
+
 ## Project Structure
 
 ```
@@ -320,6 +468,22 @@ todo stats    # Show statistics
   - UI/TUI: Component tests + manual verification checklists
   - API contracts: Contract tests
 - **Plans should reflect incremental delivery**, not big-bang integration
+
+### 2026-01-17 - Planner wrote code instead of creating plan
+**What happened:** The planner role created test code (`test/test_components.jl`) and a design document (`docs/tui-design.md`) but did NOT create an implementation plan in the `plans/` folder. It also did not instruct the user to clear context and invoke the implementer.
+
+**Why it happened:**
+1. Planner conflated "TDD test-first" with planning - but TDD is implementation work, not planning
+2. Design documents are useful but are NOT the same as implementation plans with steps
+3. No explicit handoff instruction to clear context and switch to implementer session
+
+**Rules to add:**
+- **Planner MUST create `plans/FEATURE-NAME.md`** - This is the PRIMARY deliverable of planning, not optional
+- **Planner MUST NOT write any `.jl` files** - Tests are implementation, not planning
+- **Design docs (`docs/`) are supplementary** - They do not replace implementation plans
+- **Planner MUST end with explicit handoff:** Tell user to clear context and run `/implement-step`
+- **Implementer owns test creation** - TDD test-first approach happens during implementation, not planning
+- **Before ending a planning session, verify:** The plan file exists in `plans/` with all required sections (Steps, Files, Acceptance Criteria, Testing Strategy)
 
 ### Template for new lessons:
 ```

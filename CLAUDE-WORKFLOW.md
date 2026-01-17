@@ -1,163 +1,292 @@
 # Claude Code Workflow Guide
 
-This project follows the **Boris Cherny "Plant" workflow**, where multiple Claude Code sessions work in parallel with specialized roles.
+This project follows the **Boris Cherny "Plant" workflow**, where multiple Claude Code sessions work in parallel with specialized roles. Each session has a narrow scope and fresh context.
 
 ## The "Plant" Concept
 
-Instead of one Claude session doing everything, we use **5 specialized sessions** that each excel at one task:
+Instead of one Claude session doing everything, we use **specialized sessions** that each excel at one task:
 
-| Tab | Role | Slash Command | Responsibility |
-|-----|------|---------------|----------------|
-| Tab 1 | **Planner** | `/plan-feature` | Create detailed implementation plans (read-only) |
-| Tab 2 | **Implementer** | `/implement-step` | Execute one plan step at a time, test after each |
-| Tab 3 | **Tester** | `/verify-feature` | Run tests and verify acceptance criteria |
-| Tab 4 | **Refactorer** | `/simplify` | Clean and optimize code without behavior changes |
-| Tab 5 | **Docs** | `/update-rules` | Update CLAUDE.md with lessons learned |
+| Role | Slash Command | Input | Responsibility |
+|------|---------------|-------|----------------|
+| **Planner** | `/plan-feature` | Feature spec | Create plan + work units (read-only) |
+| **Implementer** | `/implement-step UNITS N` | Work unit N | Execute ONE work unit, test, hand off |
+| **Tester** | `/verify-feature UNITS N` | Work unit N | Verify ONE unit, report PASS/FAIL |
+| **Refactorer** | `/simplify` | Files | Clean code without behavior changes |
+| **Shipper** | `/commit-push-pr` | Branch | Create commit and PR |
+| **Docs** | `/update-rules` | Lesson | Update CLAUDE.md with lessons learned |
 
-**Key Principle:** Each session does ONE job well, enabling parallel work while maintaining quality.
+**Key Principles:**
+- Each session does ONE job well
+- Context is cleared between roles
+- Work units file tracks state across sessions
+- Each work unit = one PR
 
-## Workflow Cycle
+## Work Units: The Key Concept
+
+A **Work Unit** is a PR-sized chunk of work:
+- Groups multiple plan steps together
+- Self-contained and testable
+- Results in ONE pull request
+- Has clear acceptance criteria
+
+### Work Unit Lifecycle
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  1. PLAN    │────▶│ 2. IMPLEMENT│────▶│  3. VERIFY  │
-│  (Tab 1)    │     │   (Tab 2)   │     │   (Tab 3)   │
-└─────────────┘     └─────────────┘     └─────────────┘
-     ▲                                       │
-     │                                       ▼
-     │             ┌─────────────┐     ┌─────────────┐
-     └─────────────│  5. SHIP    │◀────│ 4. SIMPLIFY │
-                   │   (Any)     │     │   (Tab 4)   │
-                   └─────────────┘     └─────────────┘
+PENDING → IN_PROGRESS → IMPLEMENTED → VERIFIED → MERGED
+                │              │
+                │              └── FAILED → back to IN_PROGRESS
+                └── BLOCKED (dependency not met)
 ```
 
-### Step-by-Step Process
+### Two-File Planning System
 
-1. **Plan (Tab 1)**
-   - Use `/plan-feature` with feature spec from `docs/features/`
-   - Claude reads CLAUDE.md, explores codebase, creates detailed plan
-   - Plan saved to `plans/FEATURE-NAME.md`
-   - Commit plan for team review
+The Planner creates TWO files:
 
-2. **Human Reviews Plan**
-   - Review plan in `plans/` directory
-   - Discuss, comment, approve
-   - Approve means implementation can begin
+| File | Purpose |
+|------|---------|
+| `plans/FEATURE.md` | Detailed step-by-step implementation plan |
+| `docs/features/FEATURE-units.md` | Work units checklist (PR-sized chunks) |
 
-3. **Implement (Tab 2)**
-   - Create feature branch: `git checkout -b feature/FEATURE-NAME`
-   - Use `/implement-step` with plan file
-   - Execute ONE step at a time
-   - Run tests after each step
-   - Claude reports completion, waits for next step
+## Workflow Diagram
 
-4. **Verify (Tab 3)**
-   - Use `/verify-feature` with plan file
-   - Runs full test suite
-   - Checks acceptance criteria
-   - Identifies any issues (doesn't fix them)
-   - Reports pass/fail
+```
+┌──────────────────┐
+│ Feature Spec     │
+│ docs/features/   │
+│ FEATURE.md       │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐     ┌─────────────────────────────────────────┐
+│ /plan-feature    │ ──► │ TWO OUTPUTS:                            │
+│ (Planner)        │     │  1. plans/FEATURE.md (detailed steps)   │
+│ READ-ONLY        │     │  2. docs/features/FEATURE-units.md      │
+└──────────────────┘     │     (work units checklist)              │
+                         └────────────────┬────────────────────────┘
+                                          │
+         ┌────────────────────────────────┴────────────────────────┐
+         │                                                         │
+         ▼                                                         ▼
+┌─────────────────────┐                              ┌─────────────────────┐
+│ Work Unit 1         │                              │ Work Unit N         │
+├─────────────────────┤                              ├─────────────────────┤
+│ CLEAR CONTEXT       │                              │ CLEAR CONTEXT       │
+│ /implement-step 1   │                              │ /implement-step N   │
+│ ─────────────────── │                              │ ─────────────────── │
+│ CLEAR CONTEXT       │                              │ CLEAR CONTEXT       │
+│ /verify-feature 1   │ ───────── ... ─────────────► │ /verify-feature N   │
+│ ─────────────────── │                              │ ─────────────────── │
+│ CLEAR CONTEXT       │                              │ CLEAR CONTEXT       │
+│ /commit-push-pr     │                              │ /commit-push-pr     │
+│ (creates PR #1)     │                              │ (creates PR #N)     │
+└─────────────────────┘                              └─────────────────────┘
+```
 
-5. **Simplify (Tab 4)**
-   - Use `/simplify` on completed feature
-   - Identifies simplification opportunities
-   - Makes incremental changes
-   - Runs tests after every change
-   - Never changes public APIs or behavior
+## Session Isolation Rules
 
-6. **Ship (Any tab)**
-   - Use `/commit-push-pr`
-   - Creates descriptive commit message
-   - Pushes branch with `-u origin`
-   - Creates PR with formatted description
+### Core Principle
 
-7. **Update Rules (Tab 5)**
-   - When mistakes happen, use `/update-rules`
-   - Document lesson learned in CLAUDE.md
-   - Prevents recurrence
+**Each session = One role, One work unit**
+
+Context MUST be cleared between:
+- Planner → Implementer
+- Implementer → Tester
+- Tester → Implementer (on FAIL)
+- Tester → Shipper (on PASS)
+- Unit N → Unit N+1
+
+### Why Session Isolation?
+
+1. **Fresh context**: Each session gets full token budget
+2. **Clean handoffs**: Work units file tracks state
+3. **Reduced errors**: No stale context causing mistakes
+4. **Parallel work**: Different units can be worked on independently
+
+### What Each Session Reads
+
+| Role | Must Read | May Read |
+|------|-----------|----------|
+| Planner | CLAUDE.md, Feature spec | Existing code patterns |
+| Implementer | CLAUDE.md, Work units file, Plan | Source files for unit |
+| Tester | CLAUDE.md, Work units file | Test files, source files |
+| Refactorer | CLAUDE.md, Source files | Tests |
+| Shipper | CLAUDE.md, Git status | Work units file |
+
+## Step-by-Step Process
+
+### 1. Plan (Planner Session)
+
+```bash
+# CLEAR CONTEXT if coming from another session
+/plan-feature docs/features/my-feature.md
+```
+
+**Process:**
+1. Claude reads CLAUDE.md and feature spec
+2. Explores codebase to understand context
+3. Creates detailed plan in `plans/FEATURE.md`
+4. Creates work units in `docs/features/FEATURE-units.md`
+5. Hands off with: "CLEAR CONTEXT, run /implement-step"
+
+**Output:** Two files ready for implementation
+
+### 2. Human Reviews Plan
+
+- Review plan in `plans/` directory
+- Review work units breakdown
+- Discuss, comment, approve
+- Ensure work units are properly sized (1-3 days each)
+
+### 3. Implement (Implementer Session) - ONE UNIT
+
+```bash
+# CLEAR CONTEXT
+# Create branch for this unit
+git checkout -b feature/my-feature-unit-1
+
+# Implement ONLY unit 1
+/implement-step docs/features/my-feature-units.md 1
+```
+
+**Process:**
+1. Claude reads work unit 1 scope and acceptance criteria
+2. Updates status: PENDING → IN_PROGRESS
+3. Implements all steps in that unit
+4. Writes tests, runs tests
+5. Updates status: IN_PROGRESS → IMPLEMENTED
+6. Hands off with: "CLEAR CONTEXT, run /verify-feature"
+
+**Output:** Code + tests for ONE work unit
+
+### 4. Verify (Tester Session) - ONE UNIT
+
+```bash
+# CLEAR CONTEXT
+/verify-feature docs/features/my-feature-units.md 1
+```
+
+**Process:**
+1. Claude checks unit status (must be IMPLEMENTED)
+2. Runs full test suite
+3. Checks each acceptance criterion
+4. Updates status: IMPLEMENTED → VERIFIED (if pass)
+5. Reports PASS or FAIL with details
+
+**If PASS:** "CLEAR CONTEXT, run /commit-push-pr"
+**If FAIL:** "CLEAR CONTEXT, run /implement-step to fix issues"
+
+### 5. Simplify (Refactorer Session) - Optional
+
+```bash
+# CLEAR CONTEXT
+/simplify src/tui/components/
+```
+
+**Process:**
+1. Identifies simplification opportunities
+2. Makes incremental changes
+3. Tests after every change
+4. Stops if tests fail
+
+**Key Rules:**
+- Never change public APIs
+- Never change behavior
+- Test after every change
+
+### 6. Ship (Shipper Session)
+
+```bash
+# CLEAR CONTEXT
+/commit-push-pr
+```
+
+**Process:**
+1. Reviews staged changes
+2. Creates descriptive commit message
+3. Pushes branch
+4. Creates PR with formatted description
+
+**After PR merged:** Proceed to next unit
+
+### 7. Repeat for Next Unit
+
+```bash
+# CLEAR CONTEXT
+git checkout -b feature/my-feature-unit-2
+/implement-step docs/features/my-feature-units.md 2
+# ... continue cycle
+```
+
+### 8. Update Rules (Docs Session) - When Needed
+
+```bash
+# CLEAR CONTEXT
+/update-rules
+```
+
+Use when mistakes happen to document lessons learned in CLAUDE.md.
 
 ## Slash Commands Reference
 
 ### `/plan-feature` - Planner Role
 
-**Purpose:** Create detailed implementation plans without writing code
+**Purpose:** Create detailed plan AND work units (without writing code)
 
-**Input:** Feature specification from `docs/features/`
+**Input:** Feature spec path (e.g., `docs/features/my-feature.md`)
 
-**Process:**
-1. Reads CLAUDE.md for project rules
-2. Explores codebase to understand context
-3. Designs implementation approach
-4. Creates plan in `plans/FEATURE-NAME.md`
+**Output:**
+- `plans/FEATURE.md` - Detailed steps
+- `docs/features/FEATURE-units.md` - Work units checklist
 
-**Output:** Detailed plan with:
-- Step-by-step instructions
-- Files to modify
-- Risks and considerations
-- Acceptance criteria
-
-**Example Usage:**
-```bash
-# In Tab 1 (Planner)
-/plan-feature docs/features/add-todo-list-view.md
-```
-
-**Key Rule:** Planner is READ-ONLY. No code edits, only planning.
+**Key Rules:**
+- READ-ONLY: No code edits
+- Must create BOTH files
+- Must define PR-sized work units
+- Must end with handoff instructions
 
 ---
 
 ### `/implement-step` - Implementer Role
 
-**Purpose:** Execute ONE step from an approved plan
+**Purpose:** Execute ONE work unit from the work units file
 
-**Input:** Plan file from `plans/` directory
+**Input:** Work units file + unit number (e.g., `docs/features/my-feature-units.md 1`)
 
 **Process:**
-1. Reads CLAUDE.md and plan file
-2. Identifies next incomplete step
-3. Makes code changes for that step only
-4. Runs tests
-5. Reports completion
+1. Check dependencies met
+2. Create branch for unit
+3. Update status to IN_PROGRESS
+4. Implement all steps in unit
+5. Write tests, run tests
+6. Update status to IMPLEMENTED
+7. Hand off to tester
 
-**Output:** Code changes + test results for one step
-
-**Example Usage:**
-```bash
-# In Tab 2 (Implementer)
-/implement-step plans/add-todo-list-view.md
-
-# Claude implements step 1, reports completion
-# You review, then:
-/implement-step plans/add-todo-list-view.md
-
-# Claude implements step 2, and so on...
-```
-
-**Key Rule:** Implementer does ONE step at a time. Test after each step.
+**Key Rules:**
+- ONE unit per session
+- Update work units file status
+- Test before marking complete
+- CLEAR CONTEXT before next unit
 
 ---
 
 ### `/verify-feature` - Tester Role
 
-**Purpose:** Run tests and verify acceptance criteria
+**Purpose:** Verify ONE work unit against acceptance criteria
 
-**Input:** Plan file with acceptance criteria
+**Input:** Work units file + unit number (e.g., `docs/features/my-feature-units.md 1`)
 
 **Process:**
-1. Runs full test suite
-2. Checks each acceptance criterion
-3. Identifies any failures
-4. Reports pass/fail with details
+1. Check unit status is IMPLEMENTED
+2. Run full test suite
+3. Check each acceptance criterion
+4. Report PASS or FAIL
+5. Update status (VERIFIED if pass)
 
-**Output:** Test report + acceptance criteria status
-
-**Example Usage:**
-```bash
-# In Tab 3 (Tester)
-/verify-feature plans/add-todo-list-view.md
-```
-
-**Key Rule:** Tester identifies issues but doesn't fix them. Implementation issues go back to Implementer.
+**Key Rules:**
+- ONE unit per session
+- Report issues, DON'T fix them
+- Clear PASS/FAIL recommendation
+- Update work units file
 
 ---
 
@@ -165,24 +294,7 @@ Instead of one Claude session doing everything, we use **5 specialized sessions*
 
 **Purpose:** Improve code without changing behavior
 
-**Input:** Files or feature to simplify
-
-**Process:**
-1. Identifies simplification opportunities
-2. Makes incremental changes
-3. Runs tests after every change
-4. Stops if tests fail
-
-**Output:** Cleaner, more maintainable code
-
-**Example Usage:**
-```bash
-# In Tab 4 (Refactorer)
-/simplify src/tui/components.jl
-
-# Or for whole feature:
-/simplify feature add-todo-list-view
-```
+**Input:** Files or directory to simplify
 
 **Key Rules:**
 - Never change public APIs
@@ -198,347 +310,236 @@ Instead of one Claude session doing everything, we use **5 specialized sessions*
 
 **Input:** Current branch with changes
 
-**Process:**
-1. Reviews staged changes
-2. Creates descriptive commit message
-3. Pushes branch with `-u origin BRANCH-NAME`
-4. Creates PR with formatted description
-
-**Output:** Commit + PR ready for review
-
-**Example Usage:**
-```bash
-# In any tab (after implementation complete)
-git add .
-/commit-push-pr
-```
-
-**Key Rule:** Never merge directly. Always create PR for review.
+**Key Rules:**
+- Never commit to main
+- Never merge directly
+- Include Claude co-author line
+- Check for secrets before committing
 
 ---
 
 ### `/update-rules` - Docs Role
 
-**Purpose:** Update CLAUDE.md after learning from mistakes
+**Purpose:** Update CLAUDE.md with lessons learned
 
 **Input:** Description of what went wrong
 
-**Process:**
-1. Analyzes the mistake
-2. Identifies root cause
-3. Proposes update to CLAUDE.md
-4. Gets approval before editing
-
-**Output:** Updated CLAUDE.md with new rule
-
-**Example Usage:**
-```bash
-# In Tab 5 (Docs)
-/update-rules
-
-# Then explain what went wrong, Claude will propose update
-```
-
-**Key Rule:** Document lessons learned to prevent recurrence.
+**Key Rules:**
+- Document immediately after mistakes
+- Include what happened, why, new rule
+- Get approval before editing
 
 ## Feature Development Example
 
-Let's walk through developing a "Todo List View" feature for our TUI application.
+Let's walk through developing a "Todo List TUI" feature.
 
-### Phase 1: Planning (Tab 1)
+### Phase 1: Planning
 
+**Session 1 (Planner):**
 ```bash
-# Create feature spec
-echo "Feature: Todo List View
-Goal: Display all todos in a styled table
-[...details...]" > docs/features/todo-list-view.md
-
-# Plan the feature
-/plan-feature docs/features/todo-list-view.md
-```
-
-Claude creates `plans/todo-list-view.md` with:
-```markdown
-# Plan: Todo List View
-
-## Steps
-1. Create TodoTable component in src/tui/components.jl
-2. Implement render_list_screen in src/tui/screens.jl
-3. Add navigation logic in src/tui/navigation.jl
-4. Write tests in test/test_tui.jl
-5. Manual test: verify display and navigation
-
-## Files
-- src/tui/components.jl (create)
-- src/tui/screens.jl (create)
-- src/tui/navigation.jl (create)
-- test/test_tui.jl (create)
-
-## Risks
-- Term.jl table rendering might not support all styles
-- Keyboard input might be platform-specific
-
-## Acceptance Criteria
-- [ ] Table displays with correct columns
-- [ ] Arrow keys navigate up/down
-- [ ] Selected row is highlighted
-- [ ] Tests pass
-```
-
-**Human reviews plan, approves.**
-
-### Phase 2: Implementation (Tab 2)
-
-```bash
-# Create feature branch
-git checkout -b feature/todo-list-view
-
-# Implement step by step
-/implement-step plans/todo-list-view.md
-```
-
-**After Step 1 completes:**
-```
-Claude: Step 1 complete. Created TodoTable component. Tests pass.
-Ready for step 2.
-```
-
-**Continue:**
-```bash
-/implement-step plans/todo-list-view.md
-```
-
-Repeat until all steps complete.
-
-### Phase 3: Verification (Tab 3)
-
-```bash
-/verify-feature plans/todo-list-view.md
-```
-
-**Output:**
-```
-Test Results: ✓ All 12 tests pass
-
-Acceptance Criteria:
-✓ Table displays with correct columns
-✓ Arrow keys navigate up/down
-✓ Selected row is highlighted
-✓ Tests pass
-
-Recommendation: PASS - Feature ready for merge
-```
-
-### Phase 4: Simplification (Tab 4)
-
-```bash
-/simplify feature todo-list-view
-```
-
-Claude identifies opportunities:
-```
-Simplifications:
-1. Extract table styling to helper function
-2. Combine similar navigation functions
-3. Simplify test setup code
-
-Applying changes incrementally...
-```
-
-### Phase 5: Ship (Any tab)
-
-```bash
-git add .
-/commit-push-pr
+/plan-feature docs/features/tui-components.md
 ```
 
 Claude creates:
-```
-Commit: feat: add todo list view with navigation
+- `plans/tui-components.md` with 16 detailed steps
+- `docs/features/tui-components-units.md` with 5 work units:
+  - Unit 1: Core Infrastructure (steps 1-2)
+  - Unit 2: Base Components (steps 3-6)
+  - Unit 3: Form Components (steps 7-8)
+  - Unit 4: Screen Implementations (steps 9-14)
+  - Unit 5: Integration & Polish (steps 15-16)
 
-PR Title: Add Todo List View with Navigation
-PR Description:
-## Summary
-Implements styled todo list table with keyboard navigation
+**Human reviews, approves.**
 
-## Changes
-- TodoTable component for rendering
-- List screen with arrow key navigation
-- Full test coverage
+### Phase 2: Implementation (Unit 1)
 
-## Testing
-- [x] All tests pass (12/12)
-- [x] Manual testing complete
-```
-
-### Phase 6: Update Rules (Tab 5, if needed)
-
-If issues occurred during development:
-
+**Session 2 (Implementer):**
 ```bash
-/update-rules
+# Create branch
+git checkout -b feature/tui-components-unit-1
+
+# Implement unit 1
+/implement-step docs/features/tui-components-units.md 1
 ```
 
-Claude proposes addition to CLAUDE.md:
+Claude:
+- Updates Unit 1 status: PENDING → IN_PROGRESS
+- Implements AppState, Screen enum, state helpers
+- Writes tests (15 tests)
+- Updates status: IN_PROGRESS → IMPLEMENTED
+- Reports: "CLEAR CONTEXT, run /verify-feature"
+
+### Phase 3: Verification (Unit 1)
+
+**Session 3 (Tester):**
+```bash
+/verify-feature docs/features/tui-components-units.md 1
+```
+
+Claude:
+- Runs full test suite (15/15 pass)
+- Checks acceptance criteria (all pass)
+- Updates status: IMPLEMENTED → VERIFIED
+- Reports: "PASS - CLEAR CONTEXT, run /commit-push-pr"
+
+### Phase 4: Ship (Unit 1)
+
+**Session 4 (Shipper):**
+```bash
+/commit-push-pr
+```
+
+Claude creates PR #1 for Unit 1.
+
+### Phase 5: Repeat for Units 2-5
+
+After PR #1 merged:
+
+**Session 5 (Implementer):**
+```bash
+git checkout -b feature/tui-components-unit-2
+/implement-step docs/features/tui-components-units.md 2
+```
+
+Continue until all units complete.
+
+## Work Units File Example
+
 ```markdown
-### [2026-01-14] - Term.jl table column width
-**What happened:** Table columns didn't align correctly
-**Why:** Didn't specify fixed column widths
-**Rule:** Always specify fixed widths for Term.jl tables
+# Work Units: TUI Components
+
+**Feature:** Phase 4 TUI Components
+**Plan:** plans/tui-components.md
+**Status:** In Progress
+
+## Progress Summary
+
+| Unit | Name | Status | Branch | PR |
+|------|------|--------|--------|-----|
+| 1 | Core Infrastructure | MERGED | feature/tui-unit-1 | #12 |
+| 2 | Base Components | VERIFIED | feature/tui-unit-2 | #13 |
+| 3 | Form Components | IN_PROGRESS | feature/tui-unit-3 | - |
+| 4 | Screen Implementations | PENDING | - | - |
+| 5 | Integration & Polish | PENDING | - | - |
+
+## Work Units
+
+### Unit 1: Core Infrastructure
+**Status:** MERGED
+**Branch:** feature/tui-unit-1
+**Plan Steps:** 1, 2
+**Acceptance Criteria:**
+- [x] AppState struct with all fields
+- [x] Screen enum defined
+- [x] State transitions work
+- [x] All tests pass
+
+### Unit 2: Base Components
+**Status:** VERIFIED
+**Branch:** feature/tui-unit-2
+**Plan Steps:** 3, 4, 5, 6
+**Depends On:** Unit 1
+**Acceptance Criteria:**
+- [x] Header renders with title
+- [x] Footer shows shortcuts
+- [x] Table supports scrolling
+- [x] All tests pass
+
+### Unit 3: Form Components
+**Status:** IN_PROGRESS
+**Branch:** feature/tui-unit-3
+**Plan Steps:** 7, 8
+**Depends On:** Unit 2
+**Acceptance Criteria:**
+- [ ] Text fields work
+- [ ] Dropdowns work
+- [ ] Validation works
+- [ ] All tests pass
+
+## Session Log
+
+### 2026-01-17 - Implementer: Unit 3
+**Result:** In Progress
+**Notes:**
+- Created text field component
+- Working on dropdown next
+- Handoff: Continue implementation
 ```
 
 ## Tips for Success
 
-### For Planning (Tab 1)
-- Provide detailed feature specs in `docs/features/`
-- Plans should be thorough but not prescriptive
-- Include acceptance criteria for verification
-- Commit plans for team review
+### For Planning
+- Provide detailed feature specs
+- Size work units for 1-3 days of work
+- Each unit should result in ONE PR
+- Include acceptance criteria per unit
 
-### For Implementation (Tab 2)
-- ONE step at a time, test after each
-- Don't skip ahead to future steps
-- Report completion, wait for next instruction
-- Keep commits atomic and focused
+### For Implementation
+- ONE unit per session
+- Update work units file status
+- Test before marking complete
+- Clear, specific handoff notes
 
-### For Testing (Tab 3)
-- Run full test suite, not just new tests
-- Check all acceptance criteria
-- Report issues without fixing them
-- Provide clear pass/fail recommendation
+### For Testing
+- Run FULL test suite (catch regressions)
+- Check ALL acceptance criteria
+- Report issues, don't fix them
+- Clear PASS/FAIL recommendation
 
-### For Refactoring (Tab 4)
-- Wait until feature is complete and tested
-- Make incremental changes
-- Test after every change
-- Focus on readability and maintainability
-
-### For Shipping (Any tab)
-- Always create PR, never merge directly
-- Use descriptive commit messages
-- Include "Co-Authored-By: Claude..." in commits
-- Link PRs to related issues
-
-### For Rules Updates (Tab 5)
-- Document mistakes immediately
-- Include what happened, why, and new rule
-- Get approval before updating CLAUDE.md
-- Be specific to prevent recurrence
-
-## Common Patterns
-
-### Pattern 1: Parallel Planning
-Plan multiple features simultaneously in separate tabs:
-```bash
-# Tab 1: Plan feature A
-/plan-feature docs/features/feature-a.md
-
-# Tab 2: Plan feature B
-/plan-feature docs/features/feature-b.md
-
-# Tab 3: Plan feature C
-/plan-feature docs/features/feature-c.md
-```
-
-### Pattern 2: Pipeline Development
-Implement while planning next feature:
-```bash
-# Tab 1: Plan feature B
-/plan-feature docs/features/feature-b.md
-
-# Tab 2: Implement feature A
-/implement-step plans/feature-a.md
-```
-
-### Pattern 3: Continuous Verification
-Test while implementing:
-```bash
-# Tab 1: Implement step
-/implement-step plans/feature-a.md
-
-# Tab 2: Verify after each step
-/verify-feature plans/feature-a.md
-```
+### For Session Management
+- ALWAYS clear context between roles
+- ALWAYS clear context between units
+- Read work units file at session start
+- Update work units file at session end
 
 ## Troubleshooting
 
-### Problem: Tests failing after implementation
-**Solution:** Use Tester tab (`/verify-feature`) to identify issues, then use Implementer tab to fix.
+### Problem: Context getting stale
+**Solution:** Clear context more frequently. Each role = fresh session.
 
-### Problem: Code getting messy
-**Solution:** Use Refactorer tab (`/simplify`) regularly, not just at end.
+### Problem: Lost track of progress
+**Solution:** Check work units file. It's the source of truth.
+
+### Problem: Work units too large
+**Solution:** Split into smaller units. Target: 1-3 days, one PR.
+
+### Problem: Dependencies blocking
+**Solution:** Complete dependent units first. Check "Depends On" field.
+
+### Problem: Tests failing after implementation
+**Solution:** Tester reports FAIL, implementer fixes in new session.
 
 ### Problem: Repeated mistakes
-**Solution:** Use Docs tab (`/update-rules`) to update CLAUDE.md immediately.
+**Solution:** Use `/update-rules` immediately to document lesson.
 
-### Problem: Unclear plan
-**Solution:** Improve feature spec in `docs/features/`, re-run `/plan-feature`.
+## TodoWrite Tool Clarification
 
-### Problem: Implementation stuck
-**Solution:** Check if plan step is too large. Break into smaller steps in plan file.
-
-## TUI-Specific Workflow Notes
-
-For TUI development, additional considerations:
-
-### Testing TUI Components
-- **Unit tests:** Test rendering logic (output strings)
-- **Integration tests:** Test navigation state transitions
-- **Manual tests:** Required for visual verification
-
-### TUI Development Cycle
-```bash
-# 1. Implement component
-/implement-step plans/tui-component.md
-
-# 2. Test in Docker
-./scripts/docker-start
-julia --project=. -e 'using TodoTUI; ...'
-
-# 3. Verify tests pass
-./scripts/docker-test
-
-# 4. Visual verification
-# Manual keyboard testing in TUI
+**Use TodoWrite for:** Session-internal progress tracking
+```
+Working on Unit 2:
+- [x] Create header.jl
+- [x] Create footer.jl
+- [ ] Create table.jl
+- [ ] Write tests
 ```
 
-### TUI-Specific Slash Commands
-When using slash commands for TUI features:
-- Include screen wireframes in plans
-- Specify keyboard mappings explicitly
-- Document expected visual output
-- Include manual testing checklist
+**Don't use TodoWrite for:** Cross-session state (use work units file)
 
-## Version-Controlled Plans
-
-Plans live in `plans/` directory as **permanent documentation**:
-
-**Benefits:**
-- Parallel feature planning
-- Pre-code collaboration
-- Design decision documentation
-- Knowledge transfer for new contributors
-
-**Workflow:**
-1. Create plan in `plans/FEATURE-NAME.md`
-2. Commit plan for review (on main or branch)
-3. Get approval via discussion
-4. Create feature branch
-5. Implement step-by-step
-6. Keep plan as permanent documentation
+TodoWrite is session-scoped and lost on context clear. The work units file is the persistent state tracker.
 
 ## Summary
 
-The "Plant" workflow maximizes code quality through specialization:
+The improved "Plant" workflow with work units:
 
-- **Planner:** Thinks deeply about design before coding
-- **Implementer:** Focuses on execution, one step at a time
-- **Tester:** Ensures quality without implementation bias
-- **Refactorer:** Improves code without feature pressure
-- **Docs:** Captures lessons learned for future
+1. **Planner** creates plan + work units file
+2. **Implementer** executes ONE unit per session
+3. **Tester** verifies ONE unit per session
+4. **Each unit = one PR**
+5. **Context cleared between every role/unit**
+6. **Work units file tracks state across sessions**
 
-**Key to Success:** Use the right tool (session) for each job. Don't mix responsibilities.
+**Key to Success:** Clear context frequently. Trust the work units file. One unit at a time.
 
 ---
 
-For questions or workflow improvements, update this document via `/update-rules`.
+For questions or workflow improvements, use `/update-rules` to update documentation.
