@@ -12,6 +12,34 @@ Implementation plans serve multiple purposes:
 4. **Historical Documentation:** Permanent record of why decisions were made
 5. **Knowledge Transfer:** Help new contributors understand feature development
 
+## Two-File Planning System
+
+The Planner role creates TWO files:
+
+| File | Location | Purpose |
+|------|----------|---------|
+| **Plan** | `plans/FEATURE.md` | Detailed implementation steps |
+| **Work Units** | `docs/features/FEATURE-units.md` | PR-sized chunks with acceptance criteria |
+
+### Plan File (`plans/FEATURE.md`)
+
+Contains:
+- Detailed step-by-step implementation instructions
+- Files to create or modify per step
+- Testing strategy
+- Risk assessment
+- Each step tagged with its Work Unit number
+
+### Work Units File (`docs/features/FEATURE-units.md`)
+
+Contains:
+- Progress summary table
+- PR-sized work units (groups of steps)
+- Acceptance criteria per unit
+- Dependency ordering
+- Session log for handoff notes
+- Status tracking (PENDING → MERGED)
+
 ## Workflow
 
 ### 1. Create Feature Specification
@@ -26,53 +54,56 @@ cp docs/features/_TEMPLATE.md docs/features/my-feature.md
 vim docs/features/my-feature.md
 ```
 
-### 2. Generate Implementation Plan
+### 2. Generate Plan and Work Units
 
-Use the Planner role to create a detailed plan:
+Use the Planner role to create both files:
 
 ```bash
-# In Planner tab (Tab 1)
+# Clear context first if coming from another session
 /plan-feature docs/features/my-feature.md
 ```
 
-This creates `plans/my-feature.md` with:
-- Step-by-step implementation instructions
-- Files to create or modify
-- Testing strategy
-- Acceptance criteria
-- Risk assessment
+This creates:
+- `plans/my-feature.md` - Detailed steps
+- `docs/features/my-feature-units.md` - Work units checklist
 
-### 3. Review and Approve Plan
+### 3. Review and Approve
 
-- Read the plan in `plans/my-feature.md`
+- Read both plan and work units files
 - Discuss with team (via PR comments or direct discussion)
 - Request changes if needed
 - Approve when ready
 
-### 4. Implement the Plan
+### 4. Implement Work Units
 
-Use the Implementer role to execute the plan:
+Each work unit is implemented in a separate session:
 
 ```bash
-# Create feature branch
-git checkout -b feature/my-feature
+# CLEAR CONTEXT first
+# Create or switch to feature branch
+git checkout -b feature/my-feature-unit-1
 
-# In Implementer tab (Tab 2)
-/implement-step plans/my-feature.md
+# Implement unit 1
+/implement-step docs/features/my-feature-units.md 1
 
-# After each step completion:
-/implement-step plans/my-feature.md
+# CLEAR CONTEXT
+# Verify unit 1
+/verify-feature docs/features/my-feature-units.md 1
 
-# Continue until all steps complete
+# If PASS: CLEAR CONTEXT, ship
+/commit-push-pr
+
+# After PR merged, CLEAR CONTEXT, repeat for next unit
+/implement-step docs/features/my-feature-units.md 2
 ```
 
-### 5. Keep Plan as Documentation
+### 5. Keep Files as Documentation
 
 After implementation:
-- Plans stay in this directory permanently
-- They document design decisions
+- Plan files stay in `plans/` permanently
+- Work units files stay in `docs/features/`
+- They document design decisions and implementation history
 - They help understand why code works the way it does
-- They guide future modifications
 
 ## Plan Structure
 
@@ -84,8 +115,23 @@ Each plan follows this structure:
 ## Overview
 Brief description of the feature
 
+**Work Units:** See `docs/features/FEATURE-units.md` for PR-sized breakdown
+
 ## Steps
-Detailed step-by-step implementation guide
+
+### Step 1: [Description]
+**Work Unit:** 1
+**Files:** [files to modify]
+**Changes:** [specific changes]
+**Tests:** [how to verify]
+
+### Step 2: [Description]
+**Work Unit:** 1
+...
+
+### Step 3: [Description]
+**Work Unit:** 2
+...
 
 ## Files
 List of files to create or modify
@@ -93,24 +139,37 @@ List of files to create or modify
 ## Risks
 Potential issues and mitigation strategies
 
-## Acceptance Criteria
-Specific, measurable completion criteria
+## Acceptance Criteria (Overall)
+Specific, measurable completion criteria for entire feature
 
 ## Testing Strategy
 How to verify the feature works
-
-## Notes
-Additional context or considerations
 ```
 
-## Example Plans
+## Work Units Structure
 
-This repository contains implementation plans for all major features:
+See `docs/features/_UNITS_TEMPLATE.md` for the full template.
 
-- `plans/project-foundation.md` - Initial project setup
-- `plans/docker-setup.md` - Docker configuration
-- `plans/database-layer.md` - Database schema and CRUD operations
-- *(Future plans will be added as features are developed)*
+Key sections:
+- Progress summary table
+- Work units with:
+  - Status (PENDING/IN_PROGRESS/IMPLEMENTED/VERIFIED/MERGED)
+  - Branch name
+  - Plan steps covered
+  - Dependencies
+  - Acceptance criteria
+- Session log for handoff notes
+- Issues tracking
+
+## Session Isolation
+
+**Critical:** Context MUST be cleared between:
+- Planning → Implementation
+- Implementation → Verification
+- Verification → Next Unit
+- Any role transition
+
+The work units file is the source of truth that survives context clears.
 
 ## Plan Naming Convention
 
@@ -119,6 +178,7 @@ Plans should use descriptive names matching their feature:
 - `todo-list-view.md` - Feature: Todo list view
 - `add-filter-screen.md` - Feature: Filter screen
 - `project-management.md` - Feature: Project management
+- `phase-4-tui-components.md` - Phase: TUI Components
 
 Use lowercase with hyphens, not underscores or spaces.
 
@@ -128,7 +188,7 @@ Plans can be committed to `main` branch for review:
 
 ```bash
 # After creating plan
-git add plans/my-feature.md
+git add plans/my-feature.md docs/features/my-feature-units.md
 git commit -m "docs: add implementation plan for my-feature"
 git push
 ```
@@ -138,33 +198,13 @@ Or create a PR for team review:
 ```bash
 # On a branch
 git checkout -b plan/my-feature
-git add plans/my-feature.md
+git add plans/my-feature.md docs/features/my-feature-units.md
 git commit -m "docs: add implementation plan for my-feature"
 git push -u origin plan/my-feature
 
 # Create PR for review
 gh pr create --title "Plan: My Feature" --body "Implementation plan for my-feature. Ready for review."
 ```
-
-## Parallel Planning
-
-Multiple features can be planned simultaneously:
-
-```bash
-# Tab 1: Plan feature A
-/plan-feature docs/features/feature-a.md
-
-# Tab 2: Plan feature B
-/plan-feature docs/features/feature-b.md
-
-# Tab 3: Plan feature C
-/plan-feature docs/features/feature-c.md
-```
-
-This enables:
-- Faster overall planning
-- Clearer priority discussions
-- Better resource allocation
 
 ## Plan Maintenance
 
@@ -177,85 +217,46 @@ Plans should be updated when:
 
 Keep plans as accurate historical documentation.
 
-## Plan Templates
-
-For TUI features, include:
-- Screen wireframes (ASCII art)
-- Keyboard mappings
-- Component breakdown
-- Rendering strategy
-
-For database features, include:
-- Schema changes (SQL)
-- Migration strategy
-- Data validation rules
-- Index considerations
-
-For refactoring, include:
-- Current state analysis
-- Target state description
-- Migration approach
-- Rollback strategy
-
-## Finding Plans
-
-To find a plan:
-
-```bash
-# List all plans
-ls plans/
-
-# Search plan content
-grep -r "keyword" plans/
-
-# Find plans mentioning a file
-grep -r "src/database.jl" plans/
-```
-
-## Benefits of Version-Controlled Plans
-
-1. **Parallel Planning:** Multiple features can be planned simultaneously
-2. **Pre-Code Collaboration:** Team discusses design before coding begins
-3. **Design Documentation:** Plans explain why code works the way it does
-4. **Onboarding Aid:** New contributors understand feature development
-5. **Audit Trail:** Historical record of all design decisions
-
 ## Common Pitfalls to Avoid
 
-❌ **DON'T:** Write vague plans like "Implement feature"
-✅ **DO:** Break down into specific, testable steps
+❌ **DON'T:** Create plan without work units file
+✅ **DO:** Always create both `plans/` and `docs/features/` files
 
-❌ **DON'T:** Skip planning for "simple" features
-✅ **DO:** Plan all but trivial changes (reduces mistakes)
+❌ **DON'T:** Make work units too large (entire feature) or too small (single function)
+✅ **DO:** Size units for 1-3 days of work, resulting in one PR
 
-❌ **DON'T:** Delete or modify plans after implementation
-✅ **DO:** Keep plans as historical documentation
+❌ **DON'T:** Skip context clearing between units
+✅ **DO:** Clear context after every role transition
 
-❌ **DON'T:** Make plans overly prescriptive (line-by-line code)
-✅ **DO:** Provide clear direction while allowing implementation flexibility
+❌ **DON'T:** Use TodoWrite for cross-session tracking
+✅ **DO:** Use work units file for persistent state
 
-❌ **DON'T:** Skip acceptance criteria
-✅ **DO:** Define specific, measurable completion criteria
+❌ **DON'T:** Write code during planning
+✅ **DO:** Only create markdown files during planning
+
+❌ **DON'T:** Skip verification before shipping
+✅ **DO:** Always run `/verify-feature` before `/commit-push-pr`
 
 ## Integration with Workflow
 
 Plans integrate with the Boris Cherny "Plant" workflow:
 
-1. **Planner (Tab 1):** Creates plans using `/plan-feature`
-2. **Implementer (Tab 2):** Executes plans using `/implement-step`
-3. **Tester (Tab 3):** Verifies using acceptance criteria from plan
-4. **Refactorer (Tab 4):** Simplifies after plan completion
-5. **Docs (Tab 5):** Updates CLAUDE.md with lessons learned
+1. **Planner:** Creates plans + work units using `/plan-feature`
+2. **Implementer:** Executes ONE unit using `/implement-step UNITS-FILE N`
+3. **Tester:** Verifies ONE unit using `/verify-feature UNITS-FILE N`
+4. **Refactorer:** Simplifies code using `/simplify`
+5. **Shipper:** Creates PR using `/commit-push-pr`
 
-See [CLAUDE-WORKFLOW.md](../CLAUDE-WORKFLOW.md) for full workflow details.
+Each role operates in a fresh context session.
 
 ## Questions?
 
 For questions about planning process:
-- Read: [CLAUDE-WORKFLOW.md](../CLAUDE-WORKFLOW.md)
-- Check: `.claude/commands/plan-feature.md`
+- Read: [CLAUDE.md](../CLAUDE.md) for workflow rules
+- Check: `.claude/commands/plan-feature.md` for planner instructions
+- Template: `docs/features/_UNITS_TEMPLATE.md` for work units structure
 - Refer to: Example plans in this directory
 
 ---
 
-**Remember:** Plans are permanent documentation. They help everyone understand not just *what* was built, but *why* and *how*.
+**Remember:** Plans are permanent documentation. Work units track progress. Together they ensure clean handoffs and complete implementations.

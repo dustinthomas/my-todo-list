@@ -7,3 +7,9 @@ using DBInterface
     include("test_database.jl")
     include("test_queries.jl")
 end
+
+@testset "TUI Tests" begin
+    include("test_tui_state.jl")
+    include("test_tui_input.jl")
+    include("test_tui_components.jl")
+end

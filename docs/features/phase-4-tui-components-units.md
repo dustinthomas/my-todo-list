@@ -1,0 +1,317 @@
+# Work Units: Phase 4 - TUI Components
+
+**Feature:** Terminal User Interface for TodoList
+**Plan File:** `plans/phase-4-tui-components.md`
+**Branch:** `feature/tui-components`
+
+---
+
+## Unit Status Summary
+
+| Unit | Name | Status | Steps | PR |
+|------|------|--------|-------|-----|
+| 1 | TUI Foundation | ✅ VERIFIED | 1-3 | - |
+| 2 | Data Display Components | 🔵 PENDING | 4, 6 | - |
+| 3 | Form Components | 🔵 PENDING | 5 | - |
+| 4 | Main List Screen | 🔵 PENDING | 7-8 | - |
+| 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
+| 6 | Filter System | 🔵 PENDING | 11 | - |
+| 7 | Entity Management | 🔵 PENDING | 12-13 | - |
+| 8 | Integration & Polish | 🔵 PENDING | 14-16 | - |
+
+**Legend:** 🔵 PENDING | 🟡 IN_PROGRESS | 🟢 IMPLEMENTED | ✅ VERIFIED | ⬜ MERGED | 🔴 FAILED | ⚫ BLOCKED
+
+---
+
+## Unit 1: TUI Foundation
+
+**Status:** ✅ VERIFIED
+**Plan Steps:** 1, 2, 3
+**Depends On:** Phase 3 (Database Layer)
+
+### Scope
+- Test infrastructure and helpers
+- TUI module skeleton with AppState
+- Input handling (key constants, helpers)
+- Base rendering components (header, footer, message)
+
+### Files Created
+```
+test/tui_test_helpers.jl      # Test utilities
+test/test_tui_state.jl        # State management tests (80 tests)
+test/test_tui_input.jl        # Input handler tests (71 tests)
+test/test_tui_components.jl   # Component tests (46 tests)
+src/tui/tui.jl                # Main TUI module
+src/tui/state.jl              # AppState, Screen enum
+src/tui/input.jl              # Key constants, helpers
+src/tui/components/components.jl
+src/tui/components/header.jl
+src/tui/components/footer.jl
+src/tui/components/message.jl
+```
+
+### Acceptance Criteria
+- [x] Screen enum with all 15 screens
+- [x] AppState struct with all required fields
+- [x] State transition functions (go_to_screen!, go_back!, refresh_data!)
+- [x] Key constants for all actions
+- [x] Key helper functions (is_navigation_key, is_quit_key, etc.)
+- [x] Header, footer, message components render correctly
+- [x] All tests pass (197 TUI tests)
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+| 2026-01-17 | IMPLEMENTED | Steps 1-3 complete. 367 total tests pass (170 DB + 197 TUI). Ready for verification. |
+| 2026-01-17 | VERIFIED | All 7 acceptance criteria met. 367 tests pass. Ready for PR. |
+
+---
+
+## Unit 2: Data Display Components
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 4, 6
+**Depends On:** Unit 1
+
+### Scope
+- Table component for todos, projects, categories
+- Format helpers (status colors, priority display)
+- Dialog component for delete confirmation
+- Filter summary display
+
+### Files to Create
+```
+src/tui/components/table.jl   # Todo/Project/Category tables
+src/tui/components/dialog.jl  # Delete confirmation, filter menu
+```
+
+### Acceptance Criteria
+- [ ] `render_todo_table()` with selection, scrolling
+- [ ] `render_project_table()` with todo counts
+- [ ] `render_category_table()` with todo counts
+- [ ] `format_status()` with colors
+- [ ] `format_priority()` with colors
+- [ ] `render_delete_dialog()` confirmation
+- [ ] `render_filter_summary()` active filters
+- [ ] All component tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 3: Form Components
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 5
+**Depends On:** Unit 1
+
+### Scope
+- Text field component
+- Radio group component
+- Dropdown component
+- Full form rendering for todos
+
+### Files to Create
+```
+src/tui/components/form.jl    # Form input components
+```
+
+### Acceptance Criteria
+- [ ] `render_text_field()` with focus state, errors
+- [ ] `render_radio_group()` for status selection
+- [ ] `render_dropdown()` for project/category selection
+- [ ] `render_todo_form_fields()` complete form
+- [ ] All form component tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 4: Main List Screen
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 7, 8
+**Depends On:** Units 1, 2
+
+### Scope
+- Main list screen rendering
+- Main list input handling
+- Navigation, actions, screen transitions
+
+### Files to Create
+```
+src/tui/screens/screens.jl    # Screen module exports
+src/tui/screens/main_list.jl  # Main list render + input
+test/test_tui_screens.jl      # Screen tests
+```
+
+### Acceptance Criteria
+- [ ] `render_main_list()` with header, table, footer
+- [ ] Empty state handling ("No todos, press 'a' to add")
+- [ ] Filter indicator in header
+- [ ] `handle_main_list_input!()` for all keys
+- [ ] Navigation (j/k, arrows) works
+- [ ] Screen transitions (a→add, e→edit, d→delete, f→filter, p→projects, g→categories)
+- [ ] Quick complete toggle (c)
+- [ ] Quit (q) sets running=false
+- [ ] All screen tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 5: Todo CRUD Screens
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 9, 10
+**Depends On:** Units 1, 2, 3, 4
+
+### Scope
+- Todo detail view screen
+- Todo add/edit form screens
+- Form validation and save logic
+
+### Files to Create
+```
+src/tui/screens/todo_detail.jl  # Detail view
+src/tui/screens/todo_form.jl    # Add/Edit forms
+```
+
+### Acceptance Criteria
+- [ ] `render_todo_detail()` shows all fields
+- [ ] `handle_todo_detail_input!()` for back, edit, delete
+- [ ] `render_todo_form()` for add and edit modes
+- [ ] `handle_todo_form_input!()` for field navigation, save, cancel
+- [ ] `validate_todo_form!()` validates required fields, dates
+- [ ] `save_todo_form!()` creates/updates todo
+- [ ] `init_form_from_todo!()` populates edit form
+- [ ] All todo screen tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 6: Filter System
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 11
+**Depends On:** Units 1, 2, 4
+
+### Scope
+- Filter menu screen
+- Status/project/category filter selection
+- Filter application and clearing
+
+### Files to Create
+```
+src/tui/screens/filter_menu.jl  # Filter screens
+```
+
+### Acceptance Criteria
+- [ ] `render_filter_menu()` shows filter options
+- [ ] `render_filter_status()` status selection
+- [ ] `render_filter_project()` project selection
+- [ ] `render_filter_category()` category selection
+- [ ] `handle_filter_*_input!()` handlers
+- [ ] `clear_all_filters!()` resets filters
+- [ ] Filters apply with AND logic
+- [ ] All filter tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 7: Entity Management
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 12, 13
+**Depends On:** Units 1, 2, 3, 4
+
+### Scope
+- Project list and form screens
+- Category list and form screens
+- CRUD operations for both
+
+### Files to Create
+```
+src/tui/screens/project_list.jl   # Project list
+src/tui/screens/project_form.jl   # Project add/edit
+src/tui/screens/category_list.jl  # Category list
+src/tui/screens/category_form.jl  # Category add/edit
+```
+
+### Acceptance Criteria
+- [ ] `render_project_list()` with todo counts
+- [ ] `handle_project_list_input!()` handlers
+- [ ] `render_project_form()` add/edit
+- [ ] `save_project_form!()` creates/updates
+- [ ] `render_category_list()` with todo counts
+- [ ] `handle_category_list_input!()` handlers
+- [ ] `render_category_form()` add/edit
+- [ ] `save_category_form!()` creates/updates
+- [ ] All entity screen tests pass
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Unit 8: Integration & Polish
+
+**Status:** 🔵 PENDING
+**Plan Steps:** 14, 15, 16
+**Depends On:** Units 1-7
+
+### Scope
+- Delete confirmation screen
+- Render coordinator (screen routing)
+- Main event loop
+- Final integration and manual testing
+
+### Files to Create
+```
+src/tui/screens/delete_confirm.jl  # Delete confirmation
+src/tui/render.jl                  # Screen routing
+test/test_tui_integration.jl       # Integration tests
+```
+
+### Acceptance Criteria
+- [ ] `render_delete_confirm()` shows warning
+- [ ] `handle_delete_confirm_input!()` y/n handling
+- [ ] `render_screen()` routes to correct screen
+- [ ] `handle_input!()` routes to correct handler
+- [ ] `run_tui()` main loop works
+- [ ] Terminal setup/restore works
+- [ ] All integration tests pass
+- [ ] Manual test checklist complete (see plan Step 16)
+
+### Session Log
+| Date | Action | Notes |
+|------|--------|-------|
+
+---
+
+## Next Action
+
+**Current:** Unit 1 VERIFIED, ready for PR
+
+**To create PR for Unit 1:** CLEAR CONTEXT, then run:
+```
+/commit-push-pr
+```
+
+**After Unit 1 MERGED:** CLEAR CONTEXT, then run:
+```
+/implement-step docs/features/phase-4-tui-components-units.md 2
+```
