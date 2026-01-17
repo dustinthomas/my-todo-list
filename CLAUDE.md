@@ -68,6 +68,44 @@ julia --project=. test/runtests.jl
 julia --project=. scripts/install.jl
 ```
 
+### Context Management (for Claude Code sessions)
+
+**Clear context after completing each major feature unit** to maintain token efficiency and fresh focus.
+
+**Unit of work definition:**
+- Feature fully implemented (e.g., Todo CRUD, filtering functions)
+- All tests written and passing
+- Plan file updated with ✅ status and handoff notes
+- Code follows established patterns
+
+**Before clearing context:**
+1. Run full test suite: `julia --project=. test/runtests.jl`
+2. Verify all tests pass
+3. Update `plans/[phase-name].md` with:
+   - ✅ Completed step checkmarks
+   - Current status summary
+   - Files created/modified with line counts
+   - Test results (pass count)
+   - Next steps with specific instructions
+   - Key patterns to follow
+   - Important gotchas/learnings
+4. Commit work to feature branch (optional but recommended)
+
+**After clearing context (next session):**
+1. Read `CLAUDE.md` (this file) for rules and patterns
+2. Read `plans/[phase-name].md` for current status and next steps
+3. Check git branch: `git status`
+4. Run tests to verify clean state: `julia --project=. test/runtests.jl`
+5. Review existing code patterns in relevant files
+6. Begin next unit of work
+
+**Benefits:**
+- Token efficiency: Each task gets full context budget
+- Fresh perspective: No accumulated implementation cruft
+- Clear boundaries: Forces proper "definition of done"
+- Pattern reinforcement: Must read existing code to match style
+- Real-world alignment: Developers rely on tests/docs, not memory
+
 ## Project Structure
 
 ```
@@ -265,6 +303,23 @@ todo stats    # Show statistics
 ## Lessons Learned
 
 <!-- Add entries here when mistakes are made, so we never repeat them -->
+
+### 2026-01-16 - Implement with tests incrementally, not waterfall
+**What happened:** During Phase 3 database implementation, we implemented Project and Category CRUD first, planning to write tests later in Step 9. This is waterfall development, not incremental/TDD.
+
+**Why it happened:** The approved plan structured it as "implement all features → create test suite → run tests" rather than "create test suite → test-driven implementation of each feature."
+
+**Rule to add:**
+- **Create test suite structure FIRST** before implementing features
+- **Write tests for each feature BEFORE implementing it** (TDD for business logic)
+- **Keep test suite passing** throughout development
+- **Run tests after EVERY implementation step** - never batch testing
+- **Exception:** Choose appropriate testing method for the use case:
+  - Logic/algorithms: TDD (write tests first)
+  - Database operations: Integration tests (test actual DB behavior)
+  - UI/TUI: Component tests + manual verification checklists
+  - API contracts: Contract tests
+- **Plans should reflect incremental delivery**, not big-bang integration
 
 ### Template for new lessons:
 ```
