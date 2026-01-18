@@ -15,7 +15,7 @@
 | 3 | Form Components | ⬜ MERGED | 5 | #5 |
 | 4 | Main List Screen | ⬜ MERGED | 7-8 | #6 |
 | 5 | Todo CRUD Screens | ⬜ MERGED | 9-10 | #7 |
-| 6 | Filter System | ✅ VERIFIED | 11 | - |
+| 6 | Filter System | ⬜ MERGED | 11 | #8 |
 | 7 | Entity Management | 🔵 PENDING | 12-13 | - |
 | 8 | Integration & Polish | 🔵 PENDING | 14-16 | - |
 
@@ -209,7 +209,7 @@ test/test_tui_screens.jl        # Updated with 74 new tests (784 total lines)
 
 ## Unit 6: Filter System
 
-**Status:** ✅ VERIFIED
+**Status:** ⬜ MERGED (PR #8)
 **Plan Steps:** 11
 **Depends On:** Units 1, 2, 4
 
@@ -323,10 +323,9 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Unit 6 VERIFIED
+**Current:** Unit 6 MERGED (PR #8)
 
 **Next step:** CLEAR CONTEXT, then run:
 ```
-/commit-push-pr
+/implement-step docs/features/phase-4-tui-components-units.md 7
 ```
-After PR merged, proceed to Unit 7.
