@@ -113,4 +113,24 @@ export render_filter_category, handle_filter_category_input!
 export FILTER_MENU_OPTION_COUNT, FILTER_STATUS_OPTION_COUNT
 export STATUS_OPTIONS, FILTER_SHORTCUTS
 
+# Export screen functions - Project List
+export render_project_list, handle_project_list_input!
+export get_project_todo_counts
+export PROJECT_LIST_SHORTCUTS
+
+# Export screen functions - Project Form
+export render_project_form, handle_project_form_input!
+export validate_project_form!, save_project_form!, init_form_from_project!
+export PROJECT_FORM_SHORTCUTS, PROJECT_FORM_FIELD_COUNT, PROJECT_FORM_SAVE_INDEX
+
+# Export screen functions - Category List
+export render_category_list, handle_category_list_input!
+export get_category_todo_counts
+export CATEGORY_LIST_SHORTCUTS
+
+# Export screen functions - Category Form
+export render_category_form, handle_category_form_input!
+export validate_category_form!, save_category_form!, init_form_from_category!
+export CATEGORY_FORM_SHORTCUTS, CATEGORY_FORM_FIELD_COUNT, CATEGORY_FORM_SAVE_INDEX
+
 end # module
