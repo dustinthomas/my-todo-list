@@ -418,6 +418,50 @@ Resolve conflicts:
 3. Try committing again
 ```
 
+## Post-Merge: Update Units File Status
+
+**IMPORTANT:** After a PR is merged, the units file must be updated to reflect MERGED status.
+
+This is the ONE exception to the "never commit to main" rule - status updates to the units file.
+
+### Steps After PR Merge
+
+1. **Checkout main and pull**
+   ```bash
+   git checkout main && git pull
+   ```
+
+2. **Update units file**
+   - Change status from IMPLEMENTED/VERIFIED to `⬜ MERGED`
+   - Add PR number to the PR column
+   - Update individual unit sections with `**Status:** ⬜ MERGED (PR #N)`
+
+3. **Commit directly to main** (exception allowed)
+   ```bash
+   git add docs/features/FEATURE-units.md
+   git commit -m "docs: update units status to MERGED (PR #N)"
+   git push
+   ```
+
+### Example Units File Update
+
+**Before merge:**
+```markdown
+| 1 | TUI Foundation | ✅ VERIFIED | 1-3 | - |
+```
+
+**After merge:**
+```markdown
+| 1 | TUI Foundation | ⬜ MERGED | 1-3 | #5 |
+```
+
+### Why This Exception?
+
+- PR numbers aren't known until the PR is created
+- Creating a new branch just for status update is overkill
+- Status updates don't change code behavior
+- This keeps the units file as accurate source of truth
+
 ## Remember
 
 - Check branch (must be feature branch)
@@ -428,5 +472,6 @@ Resolve conflicts:
 - Push with -u origin
 - Create PR (never merge directly)
 - No secrets committed
+- **After merge: Update units file status on main**
 
 Your focus: Safe, clean, well-documented commits and PRs ready for review.

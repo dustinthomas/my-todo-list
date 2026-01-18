@@ -307,9 +307,16 @@ my-todo-list/
 5. **Push**: `git push -u origin TYPE/NAME`
 6. **Create PR**: For review (never merge directly)
 
-### Exception
+### Exceptions (Direct Commits to Main Allowed)
 
-- Updating `CLAUDE.md` itself can be done on main with explicit approval
+- Updating `CLAUDE.md` itself with explicit approval
+- **Updating units file status to MERGED after PR merge** - This is required because:
+  - PR numbers aren't known until PR is created
+  - Creating a branch for status-only updates is overkill
+  - Keeps units file as accurate source of truth
+
+  Format: `git commit -m "docs: update units status to MERGED (PR #N)"`
+
 - Everything else: use a branch
 
 ## Testing Requirements

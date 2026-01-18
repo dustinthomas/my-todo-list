@@ -10,9 +10,9 @@
 
 | Unit | Name | Status | Steps | PR |
 |------|------|--------|-------|-----|
-| 1 | TUI Foundation | ✅ VERIFIED | 1-3 | - |
-| 2 | Data Display Components | 🟢 IMPLEMENTED | 4, 6 | - |
-| 3 | Form Components | 🟢 IMPLEMENTED | 5 | - |
+| 1 | TUI Foundation | ⬜ MERGED | 1-3 | #5 |
+| 2 | Data Display Components | ⬜ MERGED | 4, 6 | #5 |
+| 3 | Form Components | ⬜ MERGED | 5 | #5 |
 | 4 | Main List Screen | 🔵 PENDING | 7-8 | - |
 | 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
@@ -25,7 +25,7 @@
 
 ## Unit 1: TUI Foundation
 
-**Status:** ✅ VERIFIED
+**Status:** ⬜ MERGED (PR #5)
 **Plan Steps:** 1, 2, 3
 **Depends On:** Phase 3 (Database Layer)
 
@@ -69,7 +69,7 @@ src/tui/components/message.jl
 
 ## Unit 2: Data Display Components
 
-**Status:** 🟢 IMPLEMENTED
+**Status:** ⬜ MERGED (PR #5)
 **Plan Steps:** 4, 6
 **Depends On:** Unit 1
 
@@ -104,7 +104,7 @@ src/tui/components/dialog.jl  # Delete confirmation, filter menu (343 lines)
 
 ## Unit 3: Form Components
 
-**Status:** 🟢 IMPLEMENTED
+**Status:** ⬜ MERGED (PR #5)
 **Plan Steps:** 5
 **Depends On:** Unit 1
 
