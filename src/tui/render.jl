@@ -10,7 +10,7 @@ It routes to the appropriate screen based on the current_screen in AppState.
 - `clear_and_render(output)`: Clear screen and display output
 """
 
-using Term: tprintln
+using Term: tprint, tprintln
 
 # =============================================================================
 # Screen Rendering Coordinator
@@ -136,7 +136,21 @@ Clear the terminal screen using ANSI escape codes.
 function clear_screen()::Nothing
     # ANSI escape: clear screen and move cursor to top-left
     print("\e[2J\e[H")
+    flush(stdout)
     return nothing
+end
+
+"""
+    fix_newlines_for_raw_mode(s::String)::String
+
+Convert \\n to \\r\\n for proper display in raw terminal mode.
+
+In raw mode, \\n moves down but doesn't return to column 0.
+We need \\r\\n to get proper line breaks.
+"""
+function fix_newlines_for_raw_mode(s::String)::String
+    # Replace \n with \r\n, but avoid doubling if \r\n already exists
+    return replace(s, r"(?<!\r)\n" => "\r\n")
 end
 
 """
@@ -154,6 +168,11 @@ Clear the screen and render the current state.
 function clear_and_render(state::AppState)::Nothing
     clear_screen()
     output = render_screen(state)
-    tprintln(output)
+    # Use Term.jl's tprint to process markup, capturing to string
+    # Then fix newlines for raw terminal mode
+    rendered = sprint(io -> tprint(io, output))
+    rendered = fix_newlines_for_raw_mode(rendered)
+    print(rendered)
+    flush(stdout)
     return nothing
 end

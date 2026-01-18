@@ -118,9 +118,38 @@ end
     has_tty()::Bool
 
 Check if stdin is connected to a TTY.
+
+Uses the POSIX isatty() function via ccall for reliable detection,
+especially in Docker containers where `stdin isa Base.TTY` may fail.
 """
 function has_tty()::Bool
-    return stdin isa Base.TTY
+    # Method 1: Try POSIX isatty() - most reliable for Docker/containers
+    try
+        fd = ccall(:fileno, Cint, (Ptr{Cvoid},), stdin.handle)
+        if fd >= 0
+            result = ccall(:isatty, Cint, (Cint,), fd)
+            if result == 1
+                return true
+            end
+        end
+    catch
+        # ccall failed, try fallback methods
+    end
+
+    # Method 2: Julia's built-in TTY check (works for native terminals)
+    if stdin isa Base.TTY
+        return true
+    end
+
+    # Method 3: Check if we can run stty (indicates TTY availability)
+    try
+        run(pipeline(`stty -g`, devnull, stderr=devnull))
+        return true
+    catch
+        # stty failed, no TTY
+    end
+
+    return false
 end
 
 """
@@ -129,7 +158,7 @@ end
 Configure terminal for raw input mode.
 
 # Returns
-The original terminal state for restoration, or `nothing` if no TTY is available.
+The original terminal state for restoration, or `nothing` if setup fails.
 
 # Effects
 - Disables echo (typed characters not shown)
@@ -137,31 +166,28 @@ The original terminal state for restoration, or `nothing` if no TTY is available
 - Hides cursor
 
 # Notes
-If no TTY is available (e.g., in Docker without -it flags), this function
-will print a warning and return `nothing`. The TUI will still work but
-keyboard input may behave differently.
+Uses /dev/tty directly to ensure terminal settings are applied to the
+controlling terminal, which works reliably in Docker containers.
 """
 function setup_raw_terminal()
-    # Check if we have a TTY
-    if !has_tty()
-        @warn "No TTY detected. TUI requires an interactive terminal.\n" *
-              "If running in Docker, use: docker run -it ...\n" *
-              "Or in docker-compose, set stdin_open: true and tty: true"
-        return nothing
-    end
-
-    # Try to save original settings and set raw mode
     try
-        original = read(`stty -g`, String)
-        run(`stty raw -echo`)
+        # Use /dev/tty directly - this is the controlling terminal
+        # This works more reliably than stdin in Docker
+        original_settings = read(`sh -c "stty -g < /dev/tty"`, String) |> strip
+
+        # Set raw mode on /dev/tty
+        run(`sh -c "stty raw -echo < /dev/tty"`)
 
         # Hide cursor
         print("\e[?25l")
+        flush(stdout)
 
-        return strip(original)
+        return original_settings
     catch e
         @warn "Failed to setup raw terminal: $e\n" *
-              "TUI may not work correctly. Ensure you have a proper TTY."
+              "TUI requires an interactive terminal.\n" *
+              "If running in Docker, use: docker run -it ...\n" *
+              "Or in docker-compose, set stdin_open: true and tty: true"
         return nothing
     end
 end
@@ -182,19 +208,20 @@ Restore terminal to normal mode.
 function restore_raw_terminal(original_state)
     # Show cursor (safe even without TTY)
     print("\e[?25h")
+    flush(stdout)
 
     # If no original state, nothing to restore
     if original_state === nothing
         return nothing
     end
 
-    # Restore original terminal settings
+    # Restore original terminal settings using /dev/tty
     try
-        run(`stty $original_state`)
+        run(`sh -c "stty $original_state < /dev/tty"`)
     catch
         # Fallback: try to set reasonable defaults
         try
-            run(`stty sane`)
+            run(`sh -c "stty sane < /dev/tty"`)
         catch
             # Silently ignore - terminal may not support stty
         end
