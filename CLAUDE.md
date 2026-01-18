@@ -485,6 +485,27 @@ todo stats    # Show statistics
 - **Implementer owns test creation** - TDD test-first approach happens during implementation, not planning
 - **Before ending a planning session, verify:** The plan file exists in `plans/` with all required sections (Steps, Files, Acceptance Criteria, Testing Strategy)
 
+### 2026-01-18 - Implementer invoked with plan file instead of units file
+**What happened:** The `/implement-step` command was run pointing at `plans/phase-4-tui-components.md` (the detailed plan) instead of `docs/features/phase-4-tui-components-units.md` (the work units file). This caused the implementer to work from the wrong file type.
+
+**Why it happened:**
+1. Both files exist and have similar names
+2. The skill commands did not validate the input file type
+3. Easy to confuse which file goes with which command
+
+**Rules to add:**
+- **Skills MUST validate input file types** - `/implement-step` and `/verify-feature` now validate:
+  - File must be in `docs/features/` directory
+  - File must end with `-units.md`
+  - If wrong file provided, show error with correct path suggestion
+- **File purposes are distinct:**
+  - `plans/*.md` = Detailed HOW (implementation steps, TDD patterns, testing strategy)
+  - `docs/features/*-units.md` = Actionable WHAT (PR-sized work units with acceptance criteria)
+- **Commands use units file, not plan file:**
+  - `/implement-step docs/features/FEATURE-units.md N` (correct)
+  - `/implement-step plans/FEATURE.md N` (WRONG - now errors)
+- **Plan file is reference material** - Implementer reads it for details but executes from units file
+
 ### Template for new lessons:
 ```
 ### [DATE] - [Brief description]

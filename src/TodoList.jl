@@ -75,4 +75,17 @@ export setup_terminal, restore_terminal, read_key
 # Export rendering components
 export render_header, render_footer, render_message, get_message_style
 
+# Export table components
+export render_todo_table, render_project_table, render_category_table
+export format_status, format_priority, truncate_string
+
+# Export form components
+export render_text_field, render_radio_group, render_dropdown, render_date_field
+export render_todo_form_fields, render_project_form_fields, render_category_form_fields
+
+# Export dialog components
+export render_delete_dialog, render_filter_summary
+export render_filter_menu_options, render_status_filter_options
+export render_project_filter_options, render_category_filter_options
+
 end # module

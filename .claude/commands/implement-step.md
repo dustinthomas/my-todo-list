@@ -22,44 +22,71 @@ A **Work Unit** is:
    - Read CLAUDE.md completely
    - Follow all branching, testing, and style rules
 
-2. **Read Work Units File**
-   - User provides: `docs/features/FEATURE-units.md` and unit number
+2. **VALIDATE Input File (REQUIRED)**
+   - User provides a file path and unit number
+   - **STOP and ERROR if:**
+     - File is NOT in `docs/features/` directory
+     - File does NOT end with `-units.md`
+     - File is a plan file from `plans/` directory
+   - **Error message format:**
+     ```
+     ERROR: Invalid file for /implement-step
+
+     Provided: [file path]
+     Expected: docs/features/FEATURE-units.md
+
+     The implement-step command requires a WORK UNITS file, not a plan file.
+
+     Work units files:
+     - Located in: docs/features/
+     - Named: FEATURE-units.md
+     - Contains: PR-sized work units with acceptance criteria
+
+     Plan files (plans/*.md) contain detailed implementation steps but are
+     NOT directly executable by this command.
+
+     To fix: /implement-step docs/features/FEATURE-units.md [unit-number]
+     ```
+   - **If file is from plans/**, try to find corresponding units file:
+     - `plans/phase-4-tui-components.md` → suggest `docs/features/phase-4-tui-components-units.md`
+
+3. **Read Work Units File**
    - Read the work units file to understand overall feature
    - Identify YOUR unit's scope, acceptance criteria, and dependencies
 
-3. **Read Implementation Plan**
+4. **Read Implementation Plan**
    - Read `plans/FEATURE.md` for detailed steps
    - Focus on steps belonging to YOUR work unit
    - Understand context from prior units (if any)
 
-4. **Check Dependencies**
+5. **Check Dependencies**
    - If unit has dependencies, verify they are VERIFIED or MERGED
    - If dependencies not met, STOP and report blocker
 
-5. **Create Branch**
+6. **Create Branch**
    - Branch name from work unit: `feature/FEATURE-unit-N`
    - Example: `feature/tui-components-unit-1`
 
-6. **Update Work Unit Status**
+7. **Update Work Unit Status**
    - Change YOUR unit status: `PENDING` → `IN_PROGRESS`
    - Add session log entry
 
-7. **Implement All Steps in Unit**
+8. **Implement All Steps in Unit**
    - Work through each plan step in this unit
    - Write code AND tests for each step
    - Run tests frequently
    - Use TodoWrite for session-internal tracking
 
-8. **Verify Unit Acceptance Criteria**
+9. **Verify Unit Acceptance Criteria**
    - Check all criteria in work unit
    - All tests must pass
    - No regressions in existing tests
 
-9. **Update Work Unit Status**
-   - Change status: `IN_PROGRESS` → `IMPLEMENTED`
-   - Update session log with completion notes
+10. **Update Work Unit Status**
+    - Change status: `IN_PROGRESS` → `IMPLEMENTED`
+    - Update session log with completion notes
 
-10. **Report Completion and Hand Off**
+11. **Report Completion and Hand Off**
     - Summarize what was done
     - Provide test results
     - Hand off to tester

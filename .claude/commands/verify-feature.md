@@ -20,36 +20,63 @@ A **Work Unit** is:
 1. **Read Project Rules**
    - Read CLAUDE.md for testing requirements
 
-2. **Read Work Units File**
-   - User provides: `docs/features/FEATURE-units.md` and unit number
+2. **VALIDATE Input File (REQUIRED)**
+   - User provides a file path and unit number
+   - **STOP and ERROR if:**
+     - File is NOT in `docs/features/` directory
+     - File does NOT end with `-units.md`
+     - File is a plan file from `plans/` directory
+   - **Error message format:**
+     ```
+     ERROR: Invalid file for /verify-feature
+
+     Provided: [file path]
+     Expected: docs/features/FEATURE-units.md
+
+     The verify-feature command requires a WORK UNITS file, not a plan file.
+
+     Work units files:
+     - Located in: docs/features/
+     - Named: FEATURE-units.md
+     - Contains: PR-sized work units with acceptance criteria
+
+     Plan files (plans/*.md) contain detailed implementation steps but are
+     NOT directly executable by this command.
+
+     To fix: /verify-feature docs/features/FEATURE-units.md [unit-number]
+     ```
+   - **If file is from plans/**, try to find corresponding units file:
+     - `plans/phase-4-tui-components.md` → suggest `docs/features/phase-4-tui-components-units.md`
+
+3. **Read Work Units File**
    - Read the work units file
    - Identify YOUR unit's acceptance criteria
 
-3. **Check Unit Status**
+4. **Check Unit Status**
    - Unit must be `IMPLEMENTED` to verify
    - If status is wrong, report and stop
 
-4. **Run Full Test Suite**
+5. **Run Full Test Suite**
    - Run ALL tests (not just new ones)
    - This catches regressions
    - Use Docker: `./scripts/docker-test`
    - Or Julia: `julia --project=. test/runtests.jl`
 
-5. **Check Acceptance Criteria**
+6. **Check Acceptance Criteria**
    - Verify EACH criterion from the work unit
    - Mark as ✓ PASS or ✗ FAIL
    - Be thorough and objective
 
-6. **Run Manual Tests (if applicable)**
+7. **Run Manual Tests (if applicable)**
    - For TUI: Visual verification
    - For APIs: Integration testing
    - Document manual test results
 
-7. **Update Work Unit Status**
+8. **Update Work Unit Status**
    - If ALL pass: `IMPLEMENTED` → `VERIFIED`
    - If ANY fail: Keep as `IMPLEMENTED`, log issues
 
-8. **Report Results**
+9. **Report Results**
    - Summarize test results
    - List acceptance criteria status
    - Provide clear PASS/FAIL recommendation
