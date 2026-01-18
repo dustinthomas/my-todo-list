@@ -11,8 +11,8 @@
 | Unit | Name | Status | Steps | PR |
 |------|------|--------|-------|-----|
 | 1 | TUI Foundation | ✅ VERIFIED | 1-3 | - |
-| 2 | Data Display Components | 🔵 PENDING | 4, 6 | - |
-| 3 | Form Components | 🔵 PENDING | 5 | - |
+| 2 | Data Display Components | 🟢 IMPLEMENTED | 4, 6 | - |
+| 3 | Form Components | 🟢 IMPLEMENTED | 5 | - |
 | 4 | Main List Screen | 🔵 PENDING | 7-8 | - |
 | 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
@@ -69,7 +69,7 @@ src/tui/components/message.jl
 
 ## Unit 2: Data Display Components
 
-**Status:** 🔵 PENDING
+**Status:** 🟢 IMPLEMENTED
 **Plan Steps:** 4, 6
 **Depends On:** Unit 1
 
@@ -79,31 +79,32 @@ src/tui/components/message.jl
 - Dialog component for delete confirmation
 - Filter summary display
 
-### Files to Create
+### Files Created
 ```
-src/tui/components/table.jl   # Todo/Project/Category tables
-src/tui/components/dialog.jl  # Delete confirmation, filter menu
+src/tui/components/table.jl   # Todo/Project/Category tables (265 lines)
+src/tui/components/dialog.jl  # Delete confirmation, filter menu (343 lines)
 ```
 
 ### Acceptance Criteria
-- [ ] `render_todo_table()` with selection, scrolling
-- [ ] `render_project_table()` with todo counts
-- [ ] `render_category_table()` with todo counts
-- [ ] `format_status()` with colors
-- [ ] `format_priority()` with colors
-- [ ] `render_delete_dialog()` confirmation
-- [ ] `render_filter_summary()` active filters
-- [ ] All component tests pass
+- [x] `render_todo_table()` with selection, scrolling
+- [x] `render_project_table()` with todo counts
+- [x] `render_category_table()` with todo counts
+- [x] `format_status()` with colors
+- [x] `format_priority()` with colors
+- [x] `render_delete_dialog()` confirmation
+- [x] `render_filter_summary()` active filters
+- [x] All component tests pass
 
 ### Session Log
 | Date | Action | Notes |
 |------|--------|-------|
+| 2026-01-18 | IMPLEMENTED | All table and dialog components complete. 103 new tests added. |
 
 ---
 
 ## Unit 3: Form Components
 
-**Status:** 🔵 PENDING
+**Status:** 🟢 IMPLEMENTED
 **Plan Steps:** 5
 **Depends On:** Unit 1
 
@@ -113,21 +114,22 @@ src/tui/components/dialog.jl  # Delete confirmation, filter menu
 - Dropdown component
 - Full form rendering for todos
 
-### Files to Create
+### Files Created
 ```
-src/tui/components/form.jl    # Form input components
+src/tui/components/form.jl    # Form input components (424 lines)
 ```
 
 ### Acceptance Criteria
-- [ ] `render_text_field()` with focus state, errors
-- [ ] `render_radio_group()` for status selection
-- [ ] `render_dropdown()` for project/category selection
-- [ ] `render_todo_form_fields()` complete form
-- [ ] All form component tests pass
+- [x] `render_text_field()` with focus state, errors
+- [x] `render_radio_group()` for status selection
+- [x] `render_dropdown()` for project/category selection
+- [x] `render_todo_form_fields()` complete form
+- [x] All form component tests pass
 
 ### Session Log
 | Date | Action | Notes |
 |------|--------|-------|
+| 2026-01-18 | IMPLEMENTED | All form components complete. Includes date field, project/category forms. |
 
 ---
 
@@ -304,14 +306,9 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Unit 1 VERIFIED, ready for PR
+**Current:** Units 1-3 complete (VERIFIED/IMPLEMENTED), creating PR
 
-**To create PR for Unit 1:** CLEAR CONTEXT, then run:
+**After PR MERGED:** CLEAR CONTEXT, then run:
 ```
-/commit-push-pr
-```
-
-**After Unit 1 MERGED:** CLEAR CONTEXT, then run:
-```
-/implement-step docs/features/phase-4-tui-components-units.md 2
+/implement-step docs/features/phase-4-tui-components-units.md 4
 ```

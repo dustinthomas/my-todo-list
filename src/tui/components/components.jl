@@ -21,6 +21,9 @@ message = render_message("Todo created!", :success)
 include("header.jl")
 include("footer.jl")
 include("message.jl")
+include("table.jl")
+include("form.jl")
+include("dialog.jl")
 
 # Note: Exports are defined in the parent module (TodoList.jl).
 # Export statements in included files have no effect.
