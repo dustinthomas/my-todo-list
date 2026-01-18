@@ -133,4 +133,14 @@ export render_category_form, handle_category_form_input!
 export validate_category_form!, save_category_form!, init_form_from_category!
 export CATEGORY_FORM_SHORTCUTS, CATEGORY_FORM_FIELD_COUNT, CATEGORY_FORM_SAVE_INDEX
 
+# Export screen functions - Delete Confirmation
+export render_delete_confirm, handle_delete_confirm_input!
+export perform_delete!, DELETE_CONFIRM_SHORTCUTS
+
+# Export render coordinator functions
+export render_screen, handle_input!, clear_screen, clear_and_render
+
+# Export main loop functions
+export run_main_loop!, setup_raw_terminal, restore_raw_terminal, has_tty
+
 end # module

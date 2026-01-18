@@ -96,6 +96,12 @@ const KEY_RIGHT = :right
 """Ctrl+C key combination."""
 const KEY_CTRL_C = :ctrl_c
 
+"""Backspace key."""
+const KEY_BACKSPACE = :backspace
+
+"""Delete key."""
+const KEY_DEL = :delete
+
 # =============================================================================
 # Key Classification Functions
 # =============================================================================
@@ -159,6 +165,21 @@ Check if a key cancels an action.
 """
 function is_cancel_key(key)::Bool
     return key == KEY_ESCAPE || key == KEY_NO || key == KEY_BACK
+end
+
+"""
+    is_printable_char(key)::Bool
+
+Check if a key is a printable character that can be typed into text fields.
+
+# Arguments
+- `key`: Character or Symbol representing a key press
+
+# Returns
+- `true` if key is a printable ASCII character (space through tilde)
+"""
+function is_printable_char(key)::Bool
+    return key isa Char && key >= ' ' && key <= '~'
 end
 
 """
@@ -358,6 +379,8 @@ function read_key()::Union{Char, Symbol}
         return KEY_TAB
     elseif byte == 0x03  # Ctrl+C
         return KEY_CTRL_C
+    elseif byte == 0x7F || byte == 0x08  # Backspace (DEL or BS)
+        return KEY_BACKSPACE
     else
         return Char(byte)
     end

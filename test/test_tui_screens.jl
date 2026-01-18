@@ -597,18 +597,29 @@ include("tui_test_helpers.jl")
             @test state.form_field_index == 1
         end
 
-        @testset "Form Input - Navigation with j/k" begin
+        @testset "Form Input - Text Field Character Input" begin
             state = create_test_state()
             state.current_screen = TODO_ADD
-            state.form_field_index = 1
+            state.form_field_index = 1  # Title field (text)
+            state.form_fields = Dict{Symbol,String}(:title => "")
 
-            # 'j' moves to next field
+            # 'j' and 'k' type characters in text fields (not navigate)
             handle_todo_form_input!(state, 'j')
-            @test state.form_field_index == 2
+            @test state.form_fields[:title] == "j"
+            @test state.form_field_index == 1  # Still on title field
 
-            # 'k' moves to previous field
             handle_todo_form_input!(state, 'k')
-            @test state.form_field_index == 1
+            @test state.form_fields[:title] == "jk"
+
+            # Backspace deletes character
+            handle_todo_form_input!(state, :backspace)
+            @test state.form_fields[:title] == "j"
+
+            # Type more characters
+            handle_todo_form_input!(state, 'o')
+            handle_todo_form_input!(state, 'h')
+            handle_todo_form_input!(state, 'n')
+            @test state.form_fields[:title] == "john"
         end
 
         @testset "Form Save - Add Mode" begin

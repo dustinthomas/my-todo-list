@@ -18,8 +18,9 @@ const TODO_FORM_SAVE_INDEX = 7
 
 """Keyboard shortcuts for todo form screen."""
 const TODO_FORM_SHORTCUTS = [
-    ("Tab/j", "Next Field"),
-    ("Shift+Tab/k", "Prev Field"),
+    ("Tab", "Next Field"),
+    ("Shift+Tab", "Prev Field"),
+    ("↑/↓", "Select Option"),
     ("Enter", "Save"),
     ("Esc", "Cancel")
 ]
@@ -282,6 +283,51 @@ function render_todo_form(state::AppState, mode::Symbol)::String
 end
 
 # =============================================================================
+# Field Type Helpers
+# =============================================================================
+
+"""Field indices that are text input fields."""
+const TEXT_FIELD_INDICES = [1, 2, 5, 6]  # Title, Description, Start Date, Due Date
+
+"""Field indices that are radio/selection fields."""
+const RADIO_FIELD_INDICES = [3, 4]  # Status, Priority
+
+"""Status options for radio selection."""
+const STATUS_OPTIONS = ["pending", "in_progress", "completed", "blocked"]
+
+"""Priority options for radio selection."""
+const PRIORITY_OPTIONS = ["1", "2", "3"]
+
+"""Map field index to the corresponding form field symbol."""
+function get_field_symbol(index::Int)::Union{Symbol, Nothing}
+    if index == 1
+        return :title
+    elseif index == 2
+        return :description
+    elseif index == 3
+        return :status
+    elseif index == 4
+        return :priority
+    elseif index == 5
+        return :start_date
+    elseif index == 6
+        return :due_date
+    else
+        return nothing
+    end
+end
+
+"""Check if current field is a text input field."""
+function is_text_field(index::Int)::Bool
+    return index in TEXT_FIELD_INDICES
+end
+
+"""Check if current field is a radio/selection field."""
+function is_radio_field(index::Int)::Bool
+    return index in RADIO_FIELD_INDICES
+end
+
+# =============================================================================
 # Input Handler
 # =============================================================================
 
@@ -295,30 +341,62 @@ Handle keyboard input on the todo form screen.
 - `key`: The key pressed (Char or Symbol)
 
 # Handled Keys
-- Tab, j, Down: Move to next field
-- Shift+Tab, k, Up: Move to previous field
-- Enter: Save (if on save button or any field)
+- Tab: Move to next field
+- Shift+Tab: Move to previous field
+- Up/Down arrows: Navigate fields OR cycle radio options
+- Enter: Save form
 - Escape: Cancel and go back
+- Printable characters: Type into text fields
+- Backspace: Delete character from text fields
 """
 function handle_todo_form_input!(state::AppState, key)::Nothing
+    idx = state.form_field_index
+
     # Cancel - go back
     if key == KEY_ESCAPE
         go_back!(state)
         return nothing
     end
 
-    # Navigate to next field
-    if key == KEY_TAB || key == 'j' || key == KEY_DOWN
-        if state.form_field_index < TODO_FORM_SAVE_INDEX
+    # Quit
+    if key == KEY_QUIT && !is_text_field(idx)
+        state.running = false
+        return nothing
+    end
+
+    if key == KEY_CTRL_C
+        state.running = false
+        return nothing
+    end
+
+    # Navigate to next field (Tab only - j is for typing)
+    if key == KEY_TAB
+        if idx < TODO_FORM_SAVE_INDEX
             state.form_field_index += 1
         end
         return nothing
     end
 
-    # Navigate to previous field
-    if key == KEY_SHIFT_TAB || key == 'k' || key == KEY_UP
-        if state.form_field_index > 1
+    # Navigate to previous field (Shift+Tab only - k is for typing)
+    if key == KEY_SHIFT_TAB
+        if idx > 1
             state.form_field_index -= 1
+        end
+        return nothing
+    end
+
+    # Arrow key handling depends on field type
+    if key == KEY_DOWN || key == KEY_UP
+        if is_radio_field(idx)
+            # Cycle through radio options
+            handle_radio_navigation!(state, idx, key)
+        else
+            # Navigate between fields
+            if key == KEY_DOWN && idx < TODO_FORM_SAVE_INDEX
+                state.form_field_index += 1
+            elseif key == KEY_UP && idx > 1
+                state.form_field_index -= 1
+            end
         end
         return nothing
     end
@@ -330,12 +408,87 @@ function handle_todo_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Quit
-    if key == KEY_QUIT || key == KEY_CTRL_C
-        state.running = false
-        return nothing
+    # Text field input handling
+    if is_text_field(idx)
+        field_sym = get_field_symbol(idx)
+        if field_sym !== nothing
+            # Backspace - delete last character
+            if key == KEY_BACKSPACE
+                current = get(state.form_fields, field_sym, "")
+                if !isempty(current)
+                    state.form_fields[field_sym] = current[1:prevind(current, end)]
+                end
+                return nothing
+            end
+
+            # Printable character - append to field
+            if is_printable_char(key)
+                current = get(state.form_fields, field_sym, "")
+                state.form_fields[field_sym] = current * string(key)
+                return nothing
+            end
+        end
+    end
+
+    # Radio field - number keys for quick selection
+    if is_radio_field(idx)
+        if key isa Char && key >= '1' && key <= '4'
+            handle_radio_quick_select!(state, idx, key)
+            return nothing
+        end
     end
 
     # Unhandled key - do nothing
+    return nothing
+end
+
+"""
+    handle_radio_navigation!(state::AppState, idx::Int, key)::Nothing
+
+Handle up/down navigation in radio fields to cycle through options.
+"""
+function handle_radio_navigation!(state::AppState, idx::Int, key)::Nothing
+    field_sym = get_field_symbol(idx)
+    if field_sym === nothing
+        return nothing
+    end
+
+    options = idx == 3 ? STATUS_OPTIONS : PRIORITY_OPTIONS
+    current = get(state.form_fields, field_sym, options[1])
+
+    # Find current index
+    current_idx = findfirst(==(current), options)
+    if current_idx === nothing
+        current_idx = 1
+    end
+
+    # Move up or down
+    if key == KEY_DOWN
+        new_idx = current_idx < length(options) ? current_idx + 1 : 1
+    else  # KEY_UP
+        new_idx = current_idx > 1 ? current_idx - 1 : length(options)
+    end
+
+    state.form_fields[field_sym] = options[new_idx]
+    return nothing
+end
+
+"""
+    handle_radio_quick_select!(state::AppState, idx::Int, key::Char)::Nothing
+
+Handle number key quick selection in radio fields.
+"""
+function handle_radio_quick_select!(state::AppState, idx::Int, key::Char)::Nothing
+    field_sym = get_field_symbol(idx)
+    if field_sym === nothing
+        return nothing
+    end
+
+    options = idx == 3 ? STATUS_OPTIONS : PRIORITY_OPTIONS
+    num = Int(key) - Int('0')  # Convert '1' to 1, etc.
+
+    if num >= 1 && num <= length(options)
+        state.form_fields[field_sym] = options[num]
+    end
     return nothing
 end
