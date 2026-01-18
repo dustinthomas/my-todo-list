@@ -10,9 +10,11 @@ Screens:
 - main_list.jl: Main todo list view
 - todo_detail.jl: Todo detail view
 - todo_form.jl: Add/Edit todo form
+- filter_menu.jl: Filter menu and filter selection screens
 """
 
 # Include screen implementations
 include("main_list.jl")
 include("todo_detail.jl")
 include("todo_form.jl")
+include("filter_menu.jl")

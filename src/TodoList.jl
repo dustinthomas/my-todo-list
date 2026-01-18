@@ -52,6 +52,7 @@ export refresh_data!
 export reset_form!
 export set_message!, clear_message!
 export setup_delete!, clear_delete!
+export clear_all_filters!
 
 # Export TUI entry point
 export run_tui
@@ -103,5 +104,13 @@ export render_todo_form, handle_todo_form_input!
 export validate_todo_form!, save_todo_form!, init_form_from_todo!
 export is_valid_date
 export TODO_FORM_SHORTCUTS, TODO_FORM_FIELD_COUNT, TODO_FORM_SAVE_INDEX
+
+# Export screen functions - Filter Menu
+export render_filter_menu, handle_filter_menu_input!
+export render_filter_status, handle_filter_status_input!
+export render_filter_project, handle_filter_project_input!
+export render_filter_category, handle_filter_category_input!
+export FILTER_MENU_OPTION_COUNT, FILTER_STATUS_OPTION_COUNT
+export STATUS_OPTIONS, FILTER_SHORTCUTS
 
 end # module
