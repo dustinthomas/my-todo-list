@@ -18,6 +18,7 @@ using Term
 include("state.jl")
 include("input.jl")
 include("components/components.jl")
+include("screens/screens.jl")
 
 # Note: Exports are defined in the parent module (TodoList.jl).
 # Export statements in included files have no effect.

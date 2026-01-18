@@ -13,7 +13,7 @@
 | 1 | TUI Foundation | ⬜ MERGED | 1-3 | #5 |
 | 2 | Data Display Components | ⬜ MERGED | 4, 6 | #5 |
 | 3 | Form Components | ⬜ MERGED | 5 | #5 |
-| 4 | Main List Screen | 🔵 PENDING | 7-8 | - |
+| 4 | Main List Screen | ✅ VERIFIED | 7-8 | - |
 | 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
 | 7 | Entity Management | 🔵 PENDING | 12-13 | - |
@@ -135,7 +135,7 @@ src/tui/components/form.jl    # Form input components (424 lines)
 
 ## Unit 4: Main List Screen
 
-**Status:** 🔵 PENDING
+**Status:** ✅ VERIFIED
 **Plan Steps:** 7, 8
 **Depends On:** Units 1, 2
 
@@ -144,27 +144,29 @@ src/tui/components/form.jl    # Form input components (424 lines)
 - Main list input handling
 - Navigation, actions, screen transitions
 
-### Files to Create
+### Files Created
 ```
-src/tui/screens/screens.jl    # Screen module exports
-src/tui/screens/main_list.jl  # Main list render + input
-test/test_tui_screens.jl      # Screen tests
+src/tui/screens/screens.jl    # Screen module exports (14 lines)
+src/tui/screens/main_list.jl  # Main list render + input (299 lines)
+test/test_tui_screens.jl      # Screen tests (301 lines)
 ```
 
 ### Acceptance Criteria
-- [ ] `render_main_list()` with header, table, footer
-- [ ] Empty state handling ("No todos, press 'a' to add")
-- [ ] Filter indicator in header
-- [ ] `handle_main_list_input!()` for all keys
-- [ ] Navigation (j/k, arrows) works
-- [ ] Screen transitions (a→add, e→edit, d→delete, f→filter, p→projects, g→categories)
-- [ ] Quick complete toggle (c)
-- [ ] Quit (q) sets running=false
-- [ ] All screen tests pass
+- [x] `render_main_list()` with header, table, footer
+- [x] Empty state handling ("No todos, press 'a' to add")
+- [x] Filter indicator in header
+- [x] `handle_main_list_input!()` for all keys
+- [x] Navigation (j/k, arrows) works
+- [x] Screen transitions (a→add, e→edit, d→delete, f→filter, p→projects, g→categories)
+- [x] Quick complete toggle (c)
+- [x] Quit (q) sets running=false
+- [x] All screen tests pass (60 new tests)
 
 ### Session Log
 | Date | Action | Notes |
 |------|--------|-------|
+| 2026-01-18 | IMPLEMENTED | Main list screen complete. 530 total tests pass (170 DB + 360 TUI). Ready for verification. |
+| 2026-01-18 | VERIFIED | All 9 acceptance criteria pass. 530/530 tests pass. Ready for PR. |
 
 ---
 
@@ -306,9 +308,14 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Units 1-3 complete (VERIFIED/IMPLEMENTED), creating PR
+**Current:** Unit 4 VERIFIED, ready for PR
 
-**After PR MERGED:** CLEAR CONTEXT, then run:
+**Next step:** CLEAR CONTEXT, then run:
 ```
-/implement-step docs/features/phase-4-tui-components-units.md 4
+/commit-push-pr
+```
+
+After PR merged, proceed to Unit 5 with:
+```
+/implement-step docs/features/phase-4-tui-components-units.md 5
 ```

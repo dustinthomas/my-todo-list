@@ -88,4 +88,9 @@ export render_delete_dialog, render_filter_summary
 export render_filter_menu_options, render_status_filter_options
 export render_project_filter_options, render_category_filter_options
 
+# Export screen functions - Main List
+export render_main_list, handle_main_list_input!
+export build_main_list_shortcuts, build_filter_subtitle
+export MAIN_LIST_VISIBLE_ROWS, MAIN_LIST_SHORTCUTS
+
 end # module
