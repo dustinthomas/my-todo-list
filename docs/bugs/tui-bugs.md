@@ -10,8 +10,8 @@
 
 | ID | Title | Priority | Status | Branch |
 |----|-------|----------|--------|--------|
-| BUG-001 | Text input not populating in form fields | HIGH | VERIFIED | bugfix/tui-raw-terminal |
-| BUG-002 | Keys require Enter to respond | HIGH | VERIFIED | bugfix/tui-raw-terminal |
+| BUG-001 | Text input not populating in form fields | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
+| BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | OPEN | - |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
 
