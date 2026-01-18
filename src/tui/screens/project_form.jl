@@ -16,8 +16,8 @@ const PROJECT_FORM_SAVE_INDEX = 4
 
 """Keyboard shortcuts for project form screen."""
 const PROJECT_FORM_SHORTCUTS = [
-    ("Tab/j", "Next Field"),
-    ("Shift+Tab/k", "Prev Field"),
+    ("Tab/↓", "Next Field"),
+    ("Shift+Tab/↑", "Prev Field"),
     ("Enter", "Save"),
     ("Esc", "Cancel")
 ]
@@ -215,6 +215,23 @@ function render_project_form(state::AppState, mode::Symbol)::String
 end
 
 # =============================================================================
+# Field Helpers
+# =============================================================================
+
+"""Map project form field index to the corresponding form field symbol."""
+function get_project_field_symbol(index::Int)::Union{Symbol, Nothing}
+    if index == 1
+        return :name
+    elseif index == 2
+        return :description
+    elseif index == 3
+        return :color
+    else
+        return nothing
+    end
+end
+
+# =============================================================================
 # Input Handler
 # =============================================================================
 
@@ -228,29 +245,44 @@ Handle keyboard input on the project form screen.
 - `key`: The key pressed (Char or Symbol)
 
 # Handled Keys
-- Tab, j, Down: Move to next field
-- Shift+Tab, k, Up: Move to previous field
-- Enter: Save (if on save button or any field)
+- Tab, Down: Move to next field
+- Shift+Tab, Up: Move to previous field
+- Enter: Save form
 - Escape: Cancel and go back
+- Printable characters: Type into text fields
+- Backspace: Delete character from text fields
 """
 function handle_project_form_input!(state::AppState, key)::Nothing
+    idx = state.form_field_index
+
     # Cancel - go back
     if key == KEY_ESCAPE
         go_back!(state)
         return nothing
     end
 
+    # Quit - only when on save button (index 4), not in text fields
+    if key == KEY_QUIT && idx == PROJECT_FORM_SAVE_INDEX
+        state.running = false
+        return nothing
+    end
+
+    if key == KEY_CTRL_C
+        state.running = false
+        return nothing
+    end
+
     # Navigate to next field
-    if key == KEY_TAB || key == 'j' || key == KEY_DOWN
-        if state.form_field_index < PROJECT_FORM_SAVE_INDEX
+    if key == KEY_TAB || key == KEY_DOWN
+        if idx < PROJECT_FORM_SAVE_INDEX
             state.form_field_index += 1
         end
         return nothing
     end
 
     # Navigate to previous field
-    if key == KEY_SHIFT_TAB || key == 'k' || key == KEY_UP
-        if state.form_field_index > 1
+    if key == KEY_SHIFT_TAB || key == KEY_UP
+        if idx > 1
             state.form_field_index -= 1
         end
         return nothing
@@ -263,10 +295,26 @@ function handle_project_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Quit
-    if key == KEY_QUIT || key == KEY_CTRL_C
-        state.running = false
-        return nothing
+    # Text field input handling (all project form fields are text fields)
+    if idx <= PROJECT_FORM_FIELD_COUNT
+        field_sym = get_project_field_symbol(idx)
+        if field_sym !== nothing
+            # Backspace - delete last character
+            if key == KEY_BACKSPACE
+                current = get(state.form_fields, field_sym, "")
+                if !isempty(current)
+                    state.form_fields[field_sym] = current[1:prevind(current, end)]
+                end
+                return nothing
+            end
+
+            # Printable character - append to field
+            if is_printable_char(key)
+                current = get(state.form_fields, field_sym, "")
+                state.form_fields[field_sym] = current * string(key)
+                return nothing
+            end
+        end
     end
 
     # Unhandled key - do nothing

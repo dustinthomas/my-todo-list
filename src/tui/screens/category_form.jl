@@ -16,8 +16,8 @@ const CATEGORY_FORM_SAVE_INDEX = 3
 
 """Keyboard shortcuts for category form screen."""
 const CATEGORY_FORM_SHORTCUTS = [
-    ("Tab/j", "Next Field"),
-    ("Shift+Tab/k", "Prev Field"),
+    ("Tab/↓", "Next Field"),
+    ("Shift+Tab/↑", "Prev Field"),
     ("Enter", "Save"),
     ("Esc", "Cancel")
 ]
@@ -209,6 +209,21 @@ function render_category_form(state::AppState, mode::Symbol)::String
 end
 
 # =============================================================================
+# Field Helpers
+# =============================================================================
+
+"""Map category form field index to the corresponding form field symbol."""
+function get_category_field_symbol(index::Int)::Union{Symbol, Nothing}
+    if index == 1
+        return :name
+    elseif index == 2
+        return :color
+    else
+        return nothing
+    end
+end
+
+# =============================================================================
 # Input Handler
 # =============================================================================
 
@@ -222,29 +237,44 @@ Handle keyboard input on the category form screen.
 - `key`: The key pressed (Char or Symbol)
 
 # Handled Keys
-- Tab, j, Down: Move to next field
-- Shift+Tab, k, Up: Move to previous field
-- Enter: Save (if on save button or any field)
+- Tab, Down: Move to next field
+- Shift+Tab, Up: Move to previous field
+- Enter: Save form
 - Escape: Cancel and go back
+- Printable characters: Type into text fields
+- Backspace: Delete character from text fields
 """
 function handle_category_form_input!(state::AppState, key)::Nothing
+    idx = state.form_field_index
+
     # Cancel - go back
     if key == KEY_ESCAPE
         go_back!(state)
         return nothing
     end
 
+    # Quit - only when on save button (index 3), not in text fields
+    if key == KEY_QUIT && idx == CATEGORY_FORM_SAVE_INDEX
+        state.running = false
+        return nothing
+    end
+
+    if key == KEY_CTRL_C
+        state.running = false
+        return nothing
+    end
+
     # Navigate to next field
-    if key == KEY_TAB || key == 'j' || key == KEY_DOWN
-        if state.form_field_index < CATEGORY_FORM_SAVE_INDEX
+    if key == KEY_TAB || key == KEY_DOWN
+        if idx < CATEGORY_FORM_SAVE_INDEX
             state.form_field_index += 1
         end
         return nothing
     end
 
     # Navigate to previous field
-    if key == KEY_SHIFT_TAB || key == 'k' || key == KEY_UP
-        if state.form_field_index > 1
+    if key == KEY_SHIFT_TAB || key == KEY_UP
+        if idx > 1
             state.form_field_index -= 1
         end
         return nothing
@@ -257,10 +287,26 @@ function handle_category_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Quit
-    if key == KEY_QUIT || key == KEY_CTRL_C
-        state.running = false
-        return nothing
+    # Text field input handling (all category form fields are text fields)
+    if idx <= CATEGORY_FORM_FIELD_COUNT
+        field_sym = get_category_field_symbol(idx)
+        if field_sym !== nothing
+            # Backspace - delete last character
+            if key == KEY_BACKSPACE
+                current = get(state.form_fields, field_sym, "")
+                if !isempty(current)
+                    state.form_fields[field_sym] = current[1:prevind(current, end)]
+                end
+                return nothing
+            end
+
+            # Printable character - append to field
+            if is_printable_char(key)
+                current = get(state.form_fields, field_sym, "")
+                state.form_fields[field_sym] = current * string(key)
+                return nothing
+            end
+        end
     end
 
     # Unhandled key - do nothing

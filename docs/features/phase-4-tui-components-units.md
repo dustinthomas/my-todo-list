@@ -17,7 +17,7 @@
 | 5 | Todo CRUD Screens | ⬜ MERGED | 9-10 | #7 |
 | 6 | Filter System | ⬜ MERGED | 11 | #8 |
 | 7 | Entity Management | ⬜ MERGED | 12-13 | #9 |
-| 8 | Integration & Polish | 🔵 PENDING | 14-16 | - |
+| 8 | Integration & Polish | 🟢 IMPLEMENTED | 14-16 | - |
 
 **Legend:** 🔵 PENDING | 🟡 IN_PROGRESS | 🟢 IMPLEMENTED | ✅ VERIFIED | ⬜ MERGED | 🔴 FAILED | ⚫ BLOCKED
 
@@ -291,7 +291,7 @@ src/tui/screens/category_form.jl  # Category add/edit (269 lines)
 
 ## Unit 8: Integration & Polish
 
-**Status:** 🔵 PENDING
+**Status:** 🟢 IMPLEMENTED
 **Plan Steps:** 14, 15, 16
 **Depends On:** Units 1-7
 
@@ -301,34 +301,113 @@ src/tui/screens/category_form.jl  # Category add/edit (269 lines)
 - Main event loop
 - Final integration and manual testing
 
-### Files to Create
+### Files Created
 ```
-src/tui/screens/delete_confirm.jl  # Delete confirmation
-src/tui/render.jl                  # Screen routing
-test/test_tui_integration.jl       # Integration tests
+src/tui/screens/delete_confirm.jl  # Delete confirmation (164 lines)
+src/tui/render.jl                  # Screen routing (143 lines)
+test/test_tui_integration.jl       # Integration tests (640 lines)
+```
+
+### Files Modified
+```
+src/tui/tui.jl                     # Added main loop, terminal setup/restore
+src/tui/screens/screens.jl         # Added delete_confirm.jl include
+src/TodoList.jl                    # Added new exports
+test/runtests.jl                   # Added integration test include
 ```
 
 ### Acceptance Criteria
-- [ ] `render_delete_confirm()` shows warning
-- [ ] `handle_delete_confirm_input!()` y/n handling
-- [ ] `render_screen()` routes to correct screen
-- [ ] `handle_input!()` routes to correct handler
-- [ ] `run_tui()` main loop works
-- [ ] Terminal setup/restore works
-- [ ] All integration tests pass
+- [x] `render_delete_confirm()` shows warning
+- [x] `handle_delete_confirm_input!()` y/n handling
+- [x] `render_screen()` routes to correct screen
+- [x] `handle_input!()` routes to correct handler
+- [x] `run_tui()` main loop works
+- [x] Terminal setup/restore works
+- [x] All integration tests pass (137 new tests)
 - [ ] Manual test checklist complete (see plan Step 16)
 
 ### Session Log
 | Date | Action | Notes |
 |------|--------|-------|
+| 2026-01-18 | IN_PROGRESS | Starting implementation. Branch: feature/tui-components-unit-8 |
+| 2026-01-18 | IMPLEMENTED | All files created. 934 total tests pass (170 DB + 764 TUI). Ready for verification. |
+| 2026-01-18 | VERIFIED | All 7 automated criteria pass. 934/934 tests pass. Manual testing required by user. |
 
 ---
 
 ## Next Action
 
-**Current:** Unit 7 MERGED (PR #9)
+**Current:** Unit 8 VERIFIED (automated tests)
 
-**Next step:** CLEAR CONTEXT, then run:
+**MANUAL TESTING REQUIRED** before PR. See checklist below.
+
+**Next step after manual testing:** CLEAR CONTEXT, then run:
 ```
-/implement-step docs/features/phase-4-tui-components-units.md 8
+/commit-push-pr
 ```
+
+### Manual Test Checklist (from plans/phase-4-tui-components.md Step 16)
+
+Execute each item and mark complete:
+
+**Navigation:**
+- [ ] Start TUI: `julia --project=. -e 'using TodoList; run_tui()'`
+- [ ] j/k moves selection up/down
+- [ ] Arrow keys work for navigation
+- [ ] Enter selects/views item
+- [ ] Escape/b goes back
+
+**Todo CRUD:**
+- [ ] 'a' opens add form
+- [ ] Fill all fields in add form
+- [ ] Tab navigates between fields
+- [ ] Enter saves new todo
+- [ ] New todo appears in list
+- [ ] Enter on todo shows detail view
+- [ ] 'e' opens edit form
+- [ ] Edit form pre-populated
+- [ ] Save updates todo
+- [ ] 'c' toggles completion (pending ↔ completed)
+- [ ] 'd' shows delete confirmation
+- [ ] 'y' deletes, 'n' cancels
+
+**Filters:**
+- [ ] 'f' opens filter menu
+- [ ] Can filter by status
+- [ ] Can filter by project
+- [ ] Can filter by category
+- [ ] Multiple filters combine (AND)
+- [ ] Clear all filters works
+- [ ] Filter indicator shows in header
+
+**Projects:**
+- [ ] 'p' opens project list
+- [ ] Can add project
+- [ ] Can edit project
+- [ ] Can delete project
+- [ ] Todo count shows correctly
+
+**Categories:**
+- [ ] 'g' opens category list
+- [ ] Can add category
+- [ ] Can edit category
+- [ ] Can delete category
+- [ ] Todo count shows correctly
+
+**Visual:**
+- [ ] Status colors correct (pending=yellow, completed=green, etc.)
+- [ ] Priority colors correct (HIGH=red, MEDIUM=yellow, LOW=dim)
+- [ ] Selected row highlighted
+- [ ] Headers bold
+- [ ] Success messages green
+- [ ] Error messages red
+
+**Error Handling:**
+- [ ] Empty title shows validation error
+- [ ] Invalid date format shows error
+- [ ] Errors display below form fields
+
+**Terminal:**
+- [ ] 'q' quits cleanly
+- [ ] Ctrl+C quits and restores terminal
+- [ ] No terminal corruption after exit
