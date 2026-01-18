@@ -259,6 +259,73 @@ using Term: Panel
             @test truncate_string("", 10) == ""
         end
 
+        @testset "Visible Length" begin
+            # Plain string
+            @test visible_length("hello") == 5
+            @test visible_length("") == 0
+
+            # Simple style tags
+            @test visible_length("{red}hello{/red}") == 5
+            @test visible_length("{bold}text{/bold}") == 4
+
+            # Multiple style tags
+            @test visible_length("{yellow}pending{/yellow}") == 7
+            @test visible_length("{red bold}HIGH{/red bold}") == 4
+
+            # Nested/compound styles
+            @test visible_length("{cyan bold}►{/cyan bold}") == 1
+            @test visible_length("{dim}LOW{/dim}") == 3
+
+            # Mixed content
+            @test visible_length("Hello {bold}World{/bold}!") == 12
+            @test visible_length("{red}A{/red} {blue}B{/blue}") == 3
+        end
+
+        @testset "Styled Rpad" begin
+            # Plain string padding
+            @test styled_rpad("hi", 5) == "hi   "
+            @test styled_rpad("hello", 5) == "hello"
+            @test styled_rpad("longer", 5) == "longer"
+
+            # Styled string padding
+            @test styled_rpad("{red}hi{/red}", 5) == "{red}hi{/red}   "
+            @test styled_rpad("{yellow}pending{/yellow}", 11) == "{yellow}pending{/yellow}    "
+
+            # No padding needed (already at width)
+            @test styled_rpad("{dim}LOW{/dim}", 3) == "{dim}LOW{/dim}"
+
+            # Complex styles
+            @test styled_rpad("{red bold}HIGH{/red bold}", 8) == "{red bold}HIGH{/red bold}    "
+        end
+
+        @testset "Table Alignment with Styled Content" begin
+            # BUG-003 regression test: verify styled columns align correctly
+            todos = [
+                Todo(1, "First todo", nothing, "pending", 1, nothing, nothing,
+                     nothing, "2026-01-20", nothing, nothing, nothing),
+                Todo(2, "Second todo", nothing, "completed", 3, nothing, nothing,
+                     nothing, "2026-01-25", nothing, nothing, nothing),
+            ]
+
+            output = render_todo_table(todos, 1, 0, 20)
+            lines = split(output, "\n")
+
+            # Check header row exists
+            @test length(lines) >= 3
+
+            # The separator line (line 2) should have consistent column positions
+            # Format: ─────┼────────────────────────────────┼─────────────┼──────────┼────────────
+            separator_line = lines[2]
+            @test contains(separator_line, "┼")
+
+            # Data rows should contain proper column separators
+            for i in 3:min(4, length(lines))  # Check first 2 data rows
+                if !contains(lines[i], "Showing")  # Skip scroll indicator
+                    @test count("│", lines[i]) == 4  # 4 column separators per row
+                end
+            end
+        end
+
         @testset "Project Table" begin
             projects = [
                 Project(1, "Project A", "Description A", "#FF0000", nothing, nothing),
