@@ -93,4 +93,15 @@ export render_main_list, handle_main_list_input!
 export build_main_list_shortcuts, build_filter_subtitle
 export MAIN_LIST_VISIBLE_ROWS, MAIN_LIST_SHORTCUTS
 
+# Export screen functions - Todo Detail
+export render_todo_detail, handle_todo_detail_input!
+export TODO_DETAIL_SHORTCUTS
+export format_detail_value, format_detail_priority, format_detail_status
+
+# Export screen functions - Todo Form
+export render_todo_form, handle_todo_form_input!
+export validate_todo_form!, save_todo_form!, init_form_from_todo!
+export is_valid_date
+export TODO_FORM_SHORTCUTS, TODO_FORM_FIELD_COUNT, TODO_FORM_SAVE_INDEX
+
 end # module
