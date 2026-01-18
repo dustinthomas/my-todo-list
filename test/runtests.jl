@@ -12,4 +12,5 @@ end
     include("test_tui_state.jl")
     include("test_tui_input.jl")
     include("test_tui_components.jl")
+    include("test_tui_screens.jl")
 end
