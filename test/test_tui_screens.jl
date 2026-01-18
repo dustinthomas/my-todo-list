@@ -781,4 +781,451 @@ include("tui_test_helpers.jl")
             @test length(list_todos(state.db)) == initial_count + 1
         end
     end
+
+    # =========================================================================
+    # Filter Menu Screen Tests
+    # =========================================================================
+
+    @testset "Filter Menu Screen" begin
+        @testset "Filter Menu Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.selected_index = 1
+
+            output = render_filter_menu(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Filter") || contains(output_str, "Filters")
+
+            # Should show filter options
+            @test contains(output_str, "Status")
+            @test contains(output_str, "Project")
+            @test contains(output_str, "Category")
+            @test contains(output_str, "Clear")
+        end
+
+        @testset "Filter Menu - Shows Current Filters" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.filter_status = "pending"
+
+            output = render_filter_menu(state)
+            output_str = string(output)
+
+            # Should show current filter status
+            @test contains(output_str, "pending")
+        end
+
+        @testset "Filter Menu Input - Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.selected_index = 1
+
+            # Down navigation
+            handle_filter_menu_input!(state, 'j')
+            @test state.selected_index == 2
+
+            handle_filter_menu_input!(state, :down)
+            @test state.selected_index == 3
+
+            # Up navigation
+            handle_filter_menu_input!(state, 'k')
+            @test state.selected_index == 2
+
+            handle_filter_menu_input!(state, :up)
+            @test state.selected_index == 1
+        end
+
+        @testset "Filter Menu Input - Select Status Filter" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.selected_index = 1  # Status option
+
+            handle_filter_menu_input!(state, :enter)
+            @test state.current_screen == FILTER_STATUS
+        end
+
+        @testset "Filter Menu Input - Select Project Filter" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.selected_index = 2  # Project option
+
+            handle_filter_menu_input!(state, :enter)
+            @test state.current_screen == FILTER_PROJECT
+        end
+
+        @testset "Filter Menu Input - Select Category Filter" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.selected_index = 3  # Category option
+
+            handle_filter_menu_input!(state, :enter)
+            @test state.current_screen == FILTER_CATEGORY
+        end
+
+        @testset "Filter Menu Input - Clear All Filters" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.filter_status = "pending"
+            state.filter_project_id = 1
+            state.filter_category_id = 1
+            state.selected_index = 4  # Clear All option
+
+            handle_filter_menu_input!(state, :enter)
+
+            # All filters should be cleared
+            @test state.filter_status === nothing
+            @test state.filter_project_id === nothing
+            @test state.filter_category_id === nothing
+
+            # Should go back to main list
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Filter Menu Input - Cancel/Back" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+            state.previous_screen = MAIN_LIST
+
+            # Escape goes back
+            handle_filter_menu_input!(state, :escape)
+            @test state.current_screen == MAIN_LIST
+
+            # Reset
+            state.current_screen = FILTER_MENU
+            state.previous_screen = MAIN_LIST
+
+            # 'b' also goes back
+            handle_filter_menu_input!(state, 'b')
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Filter Menu Input - Quit" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_MENU
+
+            handle_filter_menu_input!(state, 'q')
+            @test state.running == false
+        end
+    end
+
+    @testset "Filter Status Screen" begin
+        @testset "Status Filter Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.selected_index = 1
+
+            output = render_filter_status(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Status") || contains(output_str, "Filter")
+
+            # Should show status options
+            @test contains(output_str, "All")
+            @test contains(output_str, "pending")
+            @test contains(output_str, "in_progress")
+            @test contains(output_str, "completed")
+            @test contains(output_str, "blocked")
+        end
+
+        @testset "Status Filter - Shows Current Selection" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.filter_status = "pending"
+            state.selected_index = 1
+
+            output = render_filter_status(state)
+            output_str = string(output)
+
+            # Current filter should be indicated (with checkmark or similar)
+            @test contains(output_str, "pending")
+            @test contains(output_str, "✓") || contains(output_str, "*")
+        end
+
+        @testset "Status Filter Input - Select All (Clear)" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.filter_status = "pending"
+            state.selected_index = 1  # All option
+
+            handle_filter_status_input!(state, :enter)
+
+            # Filter should be cleared
+            @test state.filter_status === nothing
+
+            # Should go back to main list
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Status Filter Input - Select Pending" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 2  # pending option
+
+            handle_filter_status_input!(state, :enter)
+
+            @test state.filter_status == "pending"
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Status Filter Input - Select In Progress" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 3  # in_progress option
+
+            handle_filter_status_input!(state, :enter)
+
+            @test state.filter_status == "in_progress"
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Status Filter Input - Select Completed" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 4  # completed option
+
+            handle_filter_status_input!(state, :enter)
+
+            @test state.filter_status == "completed"
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Status Filter Input - Select Blocked" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 5  # blocked option
+
+            handle_filter_status_input!(state, :enter)
+
+            @test state.filter_status == "blocked"
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Status Filter Input - Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.selected_index = 1
+
+            handle_filter_status_input!(state, 'j')
+            @test state.selected_index == 2
+
+            handle_filter_status_input!(state, 'k')
+            @test state.selected_index == 1
+        end
+
+        @testset "Status Filter Input - Cancel" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_STATUS
+            state.previous_screen = FILTER_MENU
+            state.filter_status = "pending"  # Existing filter
+
+            handle_filter_status_input!(state, :escape)
+
+            # Filter should remain unchanged
+            @test state.filter_status == "pending"
+            @test state.current_screen == FILTER_MENU
+        end
+    end
+
+    @testset "Filter Project Screen" begin
+        @testset "Project Filter Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_PROJECT
+            state.selected_index = 1
+
+            output = render_filter_project(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Project") || contains(output_str, "Filter")
+
+            # Should show All option
+            @test contains(output_str, "All")
+
+            # Should show project name
+            @test contains(output_str, "Test Project")
+        end
+
+        @testset "Project Filter Input - Select All (Clear)" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_PROJECT
+            state.previous_screen = FILTER_MENU
+            state.filter_project_id = 1
+            state.selected_index = 1  # All option
+
+            handle_filter_project_input!(state, :enter)
+
+            @test state.filter_project_id === nothing
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Project Filter Input - Select Project" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_PROJECT
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 2  # First project (index 1 is "All")
+
+            handle_filter_project_input!(state, :enter)
+
+            @test state.filter_project_id == state.projects[1].id
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Project Filter Input - Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_PROJECT
+            state.selected_index = 1
+
+            handle_filter_project_input!(state, 'j')
+            @test state.selected_index == 2
+
+            handle_filter_project_input!(state, 'k')
+            @test state.selected_index == 1
+        end
+
+        @testset "Project Filter Input - Cancel" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_PROJECT
+            state.previous_screen = FILTER_MENU
+
+            handle_filter_project_input!(state, :escape)
+            @test state.current_screen == FILTER_MENU
+        end
+    end
+
+    @testset "Filter Category Screen" begin
+        @testset "Category Filter Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_CATEGORY
+            state.selected_index = 1
+
+            output = render_filter_category(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Category") || contains(output_str, "Filter")
+
+            # Should show All option
+            @test contains(output_str, "All")
+
+            # Should show category name
+            @test contains(output_str, "Test Category")
+        end
+
+        @testset "Category Filter Input - Select All (Clear)" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_CATEGORY
+            state.previous_screen = FILTER_MENU
+            state.filter_category_id = 1
+            state.selected_index = 1  # All option
+
+            handle_filter_category_input!(state, :enter)
+
+            @test state.filter_category_id === nothing
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Category Filter Input - Select Category" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_CATEGORY
+            state.previous_screen = FILTER_MENU
+            state.selected_index = 2  # First category (index 1 is "All")
+
+            handle_filter_category_input!(state, :enter)
+
+            @test state.filter_category_id == state.categories[1].id
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Category Filter Input - Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_CATEGORY
+            state.selected_index = 1
+
+            handle_filter_category_input!(state, 'j')
+            @test state.selected_index == 2
+
+            handle_filter_category_input!(state, 'k')
+            @test state.selected_index == 1
+        end
+
+        @testset "Category Filter Input - Cancel" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = FILTER_CATEGORY
+            state.previous_screen = FILTER_MENU
+
+            handle_filter_category_input!(state, :escape)
+            @test state.current_screen == FILTER_MENU
+        end
+    end
+
+    @testset "Filter Functions" begin
+        @testset "clear_all_filters!" begin
+            state = create_test_state(with_data=true)
+            state.filter_status = "pending"
+            state.filter_project_id = 1
+            state.filter_category_id = 1
+
+            clear_all_filters!(state)
+
+            @test state.filter_status === nothing
+            @test state.filter_project_id === nothing
+            @test state.filter_category_id === nothing
+        end
+
+        @testset "Filters Apply with AND Logic" begin
+            state = create_test_state(with_data=true)
+
+            # Create some additional todos for testing
+            create_todo(state.db, "Pending Todo", status="pending", project_id=1)
+            create_todo(state.db, "Completed Todo", status="completed", project_id=1)
+            create_todo(state.db, "Pending No Project", status="pending")
+
+            # Apply status filter only
+            state.filter_status = "pending"
+            refresh_data!(state)
+            pending_count = length(state.todos)
+            @test all(t -> t.status == "pending", state.todos)
+
+            # Apply project filter too (AND logic)
+            state.filter_project_id = 1
+            refresh_data!(state)
+
+            # Should have fewer or equal todos (both conditions must match)
+            @test length(state.todos) <= pending_count
+            @test all(t -> t.status == "pending" && t.project_id == 1, state.todos)
+        end
+
+        @testset "Data Refresh After Filter Change" begin
+            state = create_test_state(with_data=true)
+
+            # Create todos with different statuses
+            create_todo(state.db, "Pending 1", status="pending")
+            create_todo(state.db, "Completed 1", status="completed")
+            refresh_data!(state)
+
+            all_count = length(state.todos)
+
+            # Apply filter
+            state.filter_status = "pending"
+            refresh_data!(state)
+
+            # Should have fewer todos
+            @test length(state.todos) < all_count
+
+            # Clear filter
+            state.filter_status = nothing
+            refresh_data!(state)
+
+            # Should have all todos again
+            @test length(state.todos) == all_count
+        end
+    end
 end

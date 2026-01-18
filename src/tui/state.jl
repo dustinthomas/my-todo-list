@@ -361,3 +361,23 @@ function clear_delete!(state::AppState)::Nothing
     state.delete_name = ""
     return nothing
 end
+
+"""
+    clear_all_filters!(state::AppState)::Nothing
+
+Clear all active filters (status, project, category).
+
+# Arguments
+- `state::AppState`: Application state
+
+# Side Effects
+- Sets filter_status to nothing
+- Sets filter_project_id to nothing
+- Sets filter_category_id to nothing
+"""
+function clear_all_filters!(state::AppState)::Nothing
+    state.filter_status = nothing
+    state.filter_project_id = nothing
+    state.filter_category_id = nothing
+    return nothing
+end
