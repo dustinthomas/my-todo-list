@@ -12,6 +12,7 @@ services:
       - ./test:/app/test
       - ./scripts:/app/scripts
       - ./Project.toml:/app/Project.toml
+      - ./Manifest.toml:/app/Manifest.toml
       # User database (Windows home directory)
       - ${HOME}/.todo-list:/root/.todo-list
       # Julia depot (persistent packages)

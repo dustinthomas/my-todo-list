@@ -141,4 +141,15 @@ requires MANUAL TESTING - cannot be unit tested.
         @test key_to_string(KEY_DOWN) == "Down"
         @test key_to_string(KEY_CTRL_C) == "Ctrl+C"
     end
+
+    @testset "has_tty function" begin
+        # Test that has_tty() exists and returns a Bool
+        # The actual return value depends on the test environment
+        # (may be true in interactive terminal, false in CI/piped input)
+        @test isdefined(TodoList, :has_tty)
+        result = has_tty()
+        @test result isa Bool
+        # Note: Actual TTY detection cannot be unit tested reliably
+        # as it depends on the terminal environment. Manual testing required.
+    end
 end

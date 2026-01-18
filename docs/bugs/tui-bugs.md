@@ -10,8 +10,8 @@
 
 | ID | Title | Priority | Status | Branch |
 |----|-------|----------|--------|--------|
-| BUG-001 | Text input not populating in form fields | HIGH | OPEN | - |
-| BUG-002 | Keys require Enter to respond | HIGH | OPEN | - |
+| BUG-001 | Text input not populating in form fields | HIGH | VERIFIED | bugfix/tui-raw-terminal |
+| BUG-002 | Keys require Enter to respond | HIGH | VERIFIED | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | OPEN | - |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
 
@@ -24,8 +24,11 @@
 ## BUG-001: Text input not populating in form fields
 
 **Priority:** HIGH
-**Status:** OPEN
+**Status:** VERIFIED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-18
+**Verified:** 2026-01-18
+**Branch:** bugfix/tui-raw-terminal
 
 ### Description
 When typing in form text fields (Title, Description, etc.), characters do not appear in the field.
@@ -61,14 +64,25 @@ The issue is likely in `src/tui/input.jl` - the `read_char()` function or termin
 2. Using `readline()` instead of single-character read
 3. Terminal mode not preserved across screen renders
 
+### Fix Applied
+Updated `has_tty()` in `src/tui/tui.jl` (lines 125-153) to use multiple detection methods:
+1. **Primary:** POSIX `isatty()` via ccall - most reliable for Docker/containers
+2. **Fallback 1:** Julia's `stdin isa Base.TTY` check - works for native terminals
+3. **Fallback 2:** Try running `stty` - indicates TTY availability
+
+This multi-method approach ensures TTY detection works in Docker containers where
+`stdin isa Base.TTY` returns false even with `-it` flags.
 
 ---
 
 ## BUG-002: Keys require Enter to respond
 
 **Priority:** HIGH
-**Status:** OPEN
+**Status:** VERIFIED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-18
+**Verified:** 2026-01-18
+**Branch:** bugfix/tui-raw-terminal
 
 ### Description
 Keyboard input requires pressing Enter after each key instead of responding immediately.
@@ -211,3 +225,5 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 |------|--------|-------|
 | 2026-01-18 | Document created | Initial bug documentation during Unit 8 manual testing |
 | 2026-01-18 | All bugs documented | BUG-001/002 root cause: TTY detection. BUG-003: table alignment. BUG-004: DB locked. |
+| 2026-01-18 | BUG-001/002 FIXED | Updated `has_tty()` in src/tui/tui.jl to use POSIX isatty() via ccall. All tests pass (939/939). |
+| 2026-01-18 | BUG-001/002 VERIFIED | Manual testing in Docker confirms keys respond immediately and text input works. |
