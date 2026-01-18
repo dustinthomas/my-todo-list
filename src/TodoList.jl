@@ -78,7 +78,7 @@ export render_header, render_footer, render_message, get_message_style
 
 # Export table components
 export render_todo_table, render_project_table, render_category_table
-export format_status, format_priority, truncate_string
+export format_status, format_priority, truncate_string, visible_length, styled_rpad
 
 # Export form components
 export render_text_field, render_radio_group, render_dropdown, render_date_field

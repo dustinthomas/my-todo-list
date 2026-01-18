@@ -168,6 +168,7 @@ PENDING → IN_PROGRESS → IMPLEMENTED → VERIFIED → MERGED
 | Planner | `/plan-feature` | Feature spec | Plan + Work units files |
 | Implementer | `/implement-step UNITS-FILE N` | Work unit N | Code + tests for unit N |
 | Tester | `/verify-feature UNITS-FILE N` | Work unit N | PASS/FAIL report |
+| Bug Fixer | `/fix-bug BUG-ID` | Bug ID from docs/bugs/ | Fixed code + updated bug doc |
 | Refactorer | `/simplify` | File or feature | Improved code |
 | Shipper | `/commit-push-pr` | Branch | Commit + PR |
 
@@ -183,6 +184,9 @@ Context MUST be cleared between:
 - Tester → Implementer (on FAIL)
 - Tester → Shipper (on PASS)
 - Unit N → Unit N+1
+- Bug Fixer → Shipper (after fix)
+- Bug Fixer → Verifier (for manual verification)
+- Bug N → Bug N+1 (for unrelated bugs)
 
 ### Why Session Isolation?
 
@@ -198,8 +202,9 @@ Context MUST be cleared between:
 | Planner | CLAUDE.md, Feature spec | Existing code patterns |
 | Implementer | CLAUDE.md, Work units file, Plan | Source files for unit |
 | Tester | CLAUDE.md, Work units file | Test files, source files |
+| Bug Fixer | CLAUDE.md, Bug doc (docs/bugs/) | Source files for bug |
 | Refactorer | CLAUDE.md, Source files | Tests |
-| Shipper | CLAUDE.md, Git status | Work units file |
+| Shipper | CLAUDE.md, Git status | Work units file, Bug doc |
 
 ### Session Handoff Protocol
 

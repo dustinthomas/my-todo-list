@@ -11,6 +11,64 @@ using Term: Panel, @style
 # =============================================================================
 
 """
+    visible_length(s::String)::Int
+
+Calculate the visible length of a string, excluding Term.jl style tags.
+
+Term.jl uses {style}text{/style} format for styling. This function strips
+those tags to calculate how many characters will actually be displayed.
+
+# Arguments
+- `s::String`: String possibly containing style tags
+
+# Returns
+- `Int`: Number of visible characters
+
+# Examples
+```julia
+visible_length("hello")                    # => 5
+visible_length("{red}hello{/red}")         # => 5
+visible_length("{bold}hi{/bold} there")    # => 8
+```
+"""
+function visible_length(s::String)::Int
+    # Remove Term.jl style tags: {style} and {/style}
+    # Matches {word}, {word word}, {/word}, etc.
+    stripped = replace(s, r"\{/?[a-zA-Z_ ]+\}" => "")
+    return length(stripped)
+end
+
+"""
+    styled_rpad(s::String, width::Int)::String
+
+Right-pad a styled string to a given visible width.
+
+Unlike `rpad`, this function accounts for Term.jl style tags when
+calculating the current string width.
+
+# Arguments
+- `s::String`: String to pad (may contain style tags)
+- `width::Int`: Desired visible width
+
+# Returns
+- `String`: String padded with spaces to reach visible width
+
+# Examples
+```julia
+styled_rpad("{red}hi{/red}", 5)  # => "{red}hi{/red}   " (3 spaces added)
+styled_rpad("hello", 5)          # => "hello" (no padding needed)
+```
+"""
+function styled_rpad(s::String, width::Int)::String
+    current_len = visible_length(s)
+    if current_len >= width
+        return s
+    end
+    padding = " " ^ (width - current_len)
+    return s * padding
+end
+
+"""
     truncate_string(s::String, max_len::Int)::String
 
 Truncate a string to maximum length, adding ellipsis if truncated.
@@ -134,8 +192,9 @@ function render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offs
     lines = String[]
 
     # Header row
-    push!(lines, "{bold}   # │ Title                          │ Status      │ Priority │ Due Date   {/bold}")
-    push!(lines, "─────┼────────────────────────────────┼─────────────┼──────────┼────────────")
+    # Column widths: selector(1) + space(1) + id(3) = 5, title(30), status(11), priority(8), date(10)
+    push!(lines, "{bold}    # │ Title                          │ Status      │ Priority │ Due Date   {/bold}")
+    push!(lines, "──────┼────────────────────────────────┼─────────────┼──────────┼────────────")
 
     for i in start_idx:end_idx
         todo = todos[i]
@@ -151,8 +210,10 @@ function render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offs
         priority = format_priority(todo.priority)
         due_date = todo.due_date !== nothing ? todo.due_date : "{dim}—{/dim}"
 
-        # Build row
-        row = "$selector $id_str │ $title_padded │ $(rpad(status, 11)) │ $(rpad(priority, 8)) │ $due_date"
+        # Build row - use styled_rpad for columns with style tags
+        status_padded = styled_rpad(status, 11)
+        priority_padded = styled_rpad(priority, 8)
+        row = "$selector $id_str │ $title_padded │ $status_padded │ $priority_padded │ $due_date"
         push!(lines, row)
     end
 

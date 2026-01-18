@@ -12,7 +12,7 @@
 |----|-------|----------|--------|--------|
 | BUG-001 | Text input not populating in form fields | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
-| BUG-003 | Table column misalignment | MEDIUM | OPEN | - |
+| BUG-003 | Table column misalignment | MEDIUM | VERIFIED | bugfix/tui-table-alignment |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
@@ -137,8 +137,11 @@ Possible solutions:
 ## BUG-003: Table column misalignment
 
 **Priority:** MEDIUM
-**Status:** OPEN
+**Status:** VERIFIED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-18
+**Verified:** 2026-01-18
+**Branch:** bugfix/tui-table-alignment
 
 ### Description
 The todo table columns do not align correctly with their headers. Column data appears offset from column headers, and table borders/separators don't render cleanly.
@@ -153,11 +156,41 @@ The todo table columns do not align correctly with their headers. Column data ap
 4. The `>` selection indicator may be affecting column alignment
 
 ### Root Cause Analysis
-Likely in `src/tui/components/table.jl`. Possible causes:
-1. Fixed column widths not matching actual content width
-2. Term.jl table formatting not handling Unicode/ANSI escape codes correctly
-3. Selection indicator (`>`) adding extra width not accounted for
-4. Status/Priority color codes affecting string width calculation
+The issue was in `src/tui/components/table.jl` at line 155. The code used Julia's built-in `rpad()` function to pad styled strings:
+
+```julia
+row = "$selector $id_str │ $title_padded │ $(rpad(status, 11)) │ $(rpad(priority, 8)) │ $due_date"
+```
+
+The problem is that `rpad()` counts Term.jl style tags (like `{yellow}pending{/yellow}`) as part of the string length. For example:
+- `"pending"` has 7 visible characters
+- `"{yellow}pending{/yellow}"` has 7 visible characters but 27 total characters
+- `rpad("{yellow}pending{/yellow}", 11)` doesn't add any padding because the string is already > 11 characters
+
+This caused the Status and Priority columns to be under-padded, breaking alignment.
+
+### Fix Applied
+Two issues were fixed:
+
+**Issue 1: Header column width mismatch**
+The header row had `   #` (4 chars) but data rows have selector(1) + space(1) + id(3) = 5 chars.
+Fixed by adding one space: `    #` (5 chars) and updating separator line accordingly.
+
+**Issue 2: Styled string padding**
+Added two helper functions in `src/tui/components/table.jl`:
+
+1. **`visible_length(s::String)::Int`** (lines 34-39) - Calculates visible string length by stripping Term.jl style tags using regex: `r"\{/?[a-zA-Z_ ]+\}"`
+
+2. **`styled_rpad(s::String, width::Int)::String`** (lines 62-69) - Right-pads a styled string based on its visible length, not raw string length
+
+Updated `render_todo_table()` (lines 194-197, 213-216) to:
+- Fix header and separator line column widths
+- Use `styled_rpad()` instead of `rpad()` for styled Status and Priority columns
+
+Added tests for:
+- `visible_length()` with various style tag combinations
+- `styled_rpad()` with plain and styled strings
+- Regression test for table alignment with styled content
 
 ---
 
@@ -227,3 +260,6 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 | 2026-01-18 | All bugs documented | BUG-001/002 root cause: TTY detection. BUG-003: table alignment. BUG-004: DB locked. |
 | 2026-01-18 | BUG-001/002 FIXED | Updated `has_tty()` in src/tui/tui.jl to use POSIX isatty() via ccall. All tests pass (939/939). |
 | 2026-01-18 | BUG-001/002 VERIFIED | Manual testing in Docker confirms keys respond immediately and text input works. |
+| 2026-01-18 | BUG-003 IN_PROGRESS | Starting fix for table column misalignment. Root cause: rpad() counts style tags. |
+| 2026-01-18 | BUG-003 FIXED | Added visible_length() and styled_rpad() helpers. Fixed header column width mismatch. All tests pass (960/960). |
+| 2026-01-18 | BUG-003 VERIFIED | Manual testing confirms columns now align correctly. |
