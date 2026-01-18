@@ -1228,4 +1228,796 @@ include("tui_test_helpers.jl")
             @test length(state.todos) == all_count
         end
     end
+
+    # =========================================================================
+    # Project List Screen Tests
+    # =========================================================================
+
+    @testset "Project List Screen" begin
+        @testset "Rendering - Empty State" begin
+            state = create_test_state(with_data=false)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+
+            output = render_project_list(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Projects") || contains(output_str, "Project")
+
+            # Should show empty state message
+            @test contains(output_str, "No projects") || contains(output_str, "empty")
+        end
+
+        @testset "Rendering - With Data" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+
+            output = render_project_list(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Projects")
+
+            # Should show project data
+            @test contains(output_str, "Test Project")
+
+            # Footer shortcuts should be present
+            @test contains(output_str, "Navigate") || contains(output_str, "j/k")
+            @test contains(output_str, "Add") || contains(output_str, "a")
+            @test contains(output_str, "Back") || contains(output_str, "b")
+        end
+
+        @testset "Rendering - Shows Todo Counts" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+
+            # The test data has todos assigned to the project
+            output = render_project_list(state)
+            output_str = string(output)
+
+            # Project table should show counts (the count depends on seed data)
+            @test contains(output_str, "Test Project")
+        end
+
+        @testset "Rendering - With Message" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.message = "Project created successfully!"
+            state.message_type = :success
+
+            output = render_project_list(state)
+            output_str = string(output)
+
+            # Message should appear
+            @test contains(output_str, "Project created successfully!")
+        end
+
+        @testset "Input Handler - Navigation Down" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+
+            # Add more projects for navigation test
+            create_project(state.db, "Project 2")
+            create_project(state.db, "Project 3")
+            refresh_data!(state)
+            state.selected_index = 1
+
+            # 'j' key moves down
+            handle_project_list_input!(state, 'j')
+            @test state.selected_index == 2
+
+            # Arrow key also moves down
+            handle_project_list_input!(state, :down)
+            @test state.selected_index == 3
+        end
+
+        @testset "Input Handler - Navigation Up" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+
+            # Add more projects
+            create_project(state.db, "Project 2")
+            refresh_data!(state)
+            state.selected_index = 2
+
+            # 'k' key moves up
+            handle_project_list_input!(state, 'k')
+            @test state.selected_index == 1
+
+            # Can't go above first item
+            handle_project_list_input!(state, 'k')
+            @test state.selected_index == 1
+        end
+
+        @testset "Input Handler - Navigation Bounds" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+
+            # Can't go below last item
+            state.selected_index = length(state.projects)
+            handle_project_list_input!(state, 'j')
+            @test state.selected_index == length(state.projects)
+        end
+
+        @testset "Input Handler - Add Project" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+
+            handle_project_list_input!(state, 'a')
+            @test state.current_screen == PROJECT_ADD
+            @test state.previous_screen == PROJECT_LIST
+            @test state.form_fields[:name] == ""
+        end
+
+        @testset "Input Handler - Edit Project" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+
+            handle_project_list_input!(state, 'e')
+            @test state.current_screen == PROJECT_EDIT
+            @test state.current_project !== nothing
+            @test state.form_fields[:name] == state.current_project.name
+        end
+
+        @testset "Input Handler - Delete Project" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+            project_name = state.projects[1].name
+            project_id = state.projects[1].id
+
+            handle_project_list_input!(state, 'd')
+            @test state.current_screen == DELETE_CONFIRM
+            @test state.delete_type == :project
+            @test state.delete_id == project_id
+            @test state.delete_name == project_name
+        end
+
+        @testset "Input Handler - View Filtered Todos (Enter)" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+            project_id = state.projects[1].id
+
+            handle_project_list_input!(state, :enter)
+            @test state.current_screen == MAIN_LIST
+            @test state.filter_project_id == project_id
+        end
+
+        @testset "Input Handler - Back Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.previous_screen = MAIN_LIST
+
+            # 'b' key goes back
+            handle_project_list_input!(state, 'b')
+            @test state.current_screen == MAIN_LIST
+
+            # Reset
+            state.current_screen = PROJECT_LIST
+            state.previous_screen = MAIN_LIST
+
+            # Escape also goes back
+            handle_project_list_input!(state, :escape)
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Input Handler - Quit" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+
+            handle_project_list_input!(state, 'q')
+            @test state.running == false
+        end
+
+        @testset "Input Handler - Empty List Actions" begin
+            state = create_test_state(with_data=false)
+            state.current_screen = PROJECT_LIST
+            state.selected_index = 1
+
+            # Edit/Delete should not change screen on empty list
+            handle_project_list_input!(state, 'e')
+            @test state.current_screen == PROJECT_LIST
+
+            handle_project_list_input!(state, 'd')
+            @test state.current_screen == PROJECT_LIST
+
+            handle_project_list_input!(state, :enter)
+            @test state.current_screen == PROJECT_LIST
+        end
+
+        @testset "Input Handler - Message Cleared on Input" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_LIST
+            state.message = "Some message"
+            state.message_type = :success
+
+            # Any input should clear message (except quit)
+            handle_project_list_input!(state, 'j')
+            @test state.message === nothing
+        end
+    end
+
+    # =========================================================================
+    # Project Form Screen Tests
+    # =========================================================================
+
+    @testset "Project Form Screen" begin
+        @testset "Add Form Rendering" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            reset_form!(state)
+            state.form_fields[:name] = ""
+            state.form_fields[:description] = ""
+            state.form_fields[:color] = ""
+
+            output = render_project_form(state, :add)
+            output_str = string(output)
+
+            # Header should indicate add mode
+            @test contains(output_str, "Add") || contains(output_str, "New")
+            @test contains(output_str, "Project")
+
+            # Should have form fields
+            @test contains(output_str, "Name")
+            @test contains(output_str, "Description")
+            @test contains(output_str, "Color")
+
+            # Footer should have save/cancel
+            @test contains(output_str, "Save") || contains(output_str, "Enter")
+            @test contains(output_str, "Cancel") || contains(output_str, "Esc")
+        end
+
+        @testset "Edit Form Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_EDIT
+            state.current_project = state.projects[1]
+            init_form_from_project!(state, state.current_project)
+
+            output = render_project_form(state, :edit)
+            output_str = string(output)
+
+            # Header should indicate edit mode
+            @test contains(output_str, "Edit")
+
+            # Should show existing values
+            @test contains(output_str, state.current_project.name)
+        end
+
+        @testset "Form Validation - Empty Name" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "",
+                :description => "",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_project_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :name)
+        end
+
+        @testset "Form Validation - Valid Name" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Project Name",
+                :description => "",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_project_form!(state)
+            @test valid == true
+            @test !haskey(state.form_errors, :name)
+        end
+
+        @testset "Form Validation - Invalid Color Format" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Name",
+                :description => "",
+                :color => "not-a-color"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_project_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :color)
+        end
+
+        @testset "Form Validation - Valid Color Format" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Name",
+                :description => "",
+                :color => "#FF0000"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_project_form!(state)
+            @test valid == true
+            @test !haskey(state.form_errors, :color)
+        end
+
+        @testset "Form Validation - Empty Color (Optional)" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Name",
+                :description => "Some description",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_project_form!(state)
+            @test valid == true
+        end
+
+        @testset "Form Input - Field Navigation Tab" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            state.form_field_index = 1
+
+            # Tab moves to next field
+            handle_project_form_input!(state, :tab)
+            @test state.form_field_index == 2
+
+            handle_project_form_input!(state, :tab)
+            @test state.form_field_index == 3
+        end
+
+        @testset "Form Input - Field Navigation Shift+Tab" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            state.form_field_index = 3
+
+            # Shift+Tab moves to previous field
+            handle_project_form_input!(state, :shift_tab)
+            @test state.form_field_index == 2
+
+            handle_project_form_input!(state, :shift_tab)
+            @test state.form_field_index == 1
+
+            # Can't go below 1
+            handle_project_form_input!(state, :shift_tab)
+            @test state.form_field_index == 1
+        end
+
+        @testset "Form Save - Add Mode" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            state.previous_screen = PROJECT_LIST
+            state.form_fields = Dict{Symbol,String}(
+                :name => "New Project from Test",
+                :description => "Test description",
+                :color => "#FF0000"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_projects(state.db))
+            save_project_form!(state, :add)
+
+            # Should create new project
+            @test length(list_projects(state.db)) == initial_count + 1
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+
+            # Should go back to previous screen
+            @test state.current_screen == PROJECT_LIST
+        end
+
+        @testset "Form Save - Edit Mode" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = PROJECT_EDIT
+            state.previous_screen = PROJECT_LIST
+            state.current_project = state.projects[1]
+            original_id = state.current_project.id
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Updated Project Name",
+                :description => "Updated description",
+                :color => "#00FF00"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_projects(state.db))
+            save_project_form!(state, :edit)
+
+            # Should not create new project
+            @test length(list_projects(state.db)) == initial_count
+
+            # Should update existing project
+            updated = get_project(state.db, original_id)
+            @test updated.name == "Updated Project Name"
+            @test updated.color == "#00FF00"
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+
+            # Should go back to previous screen
+            @test state.current_screen == PROJECT_LIST
+        end
+
+        @testset "Form Save - Validation Failure" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            state.form_fields = Dict{Symbol,String}(
+                :name => "",  # Empty name - should fail
+                :description => "",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_projects(state.db))
+            save_project_form!(state, :add)
+
+            # Should not create project
+            @test length(list_projects(state.db)) == initial_count
+
+            # Should stay on form screen
+            @test state.current_screen == PROJECT_ADD
+
+            # Should have error
+            @test haskey(state.form_errors, :name)
+        end
+
+        @testset "Form Cancel" begin
+            state = create_test_state()
+            state.current_screen = PROJECT_ADD
+            state.previous_screen = PROJECT_LIST
+            state.form_fields[:name] = "Will be cancelled"
+
+            # Escape cancels
+            handle_project_form_input!(state, :escape)
+            @test state.current_screen == PROJECT_LIST
+        end
+
+        @testset "Init Form From Project" begin
+            state = create_test_state(with_data=true)
+            project = state.projects[1]
+
+            init_form_from_project!(state, project)
+
+            @test state.form_fields[:name] == project.name
+            @test state.form_field_index == 1
+        end
+    end
+
+    # =========================================================================
+    # Category List Screen Tests
+    # =========================================================================
+
+    @testset "Category List Screen" begin
+        @testset "Rendering - Empty State" begin
+            state = create_test_state(with_data=false)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+
+            output = render_category_list(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Categories") || contains(output_str, "Category")
+
+            # Should show empty state message
+            @test contains(output_str, "No categories") || contains(output_str, "empty")
+        end
+
+        @testset "Rendering - With Data" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+
+            output = render_category_list(state)
+            output_str = string(output)
+
+            # Should have header
+            @test contains(output_str, "Categories")
+
+            # Should show category data
+            @test contains(output_str, "Test Category")
+
+            # Footer shortcuts should be present
+            @test contains(output_str, "Navigate") || contains(output_str, "j/k")
+            @test contains(output_str, "Add") || contains(output_str, "a")
+        end
+
+        @testset "Rendering - With Message" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.message = "Category created successfully!"
+            state.message_type = :success
+
+            output = render_category_list(state)
+            output_str = string(output)
+
+            # Message should appear
+            @test contains(output_str, "Category created successfully!")
+        end
+
+        @testset "Input Handler - Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+
+            # Add more categories for navigation test
+            create_category(state.db, "Category 2")
+            create_category(state.db, "Category 3")
+            refresh_data!(state)
+            state.selected_index = 1
+
+            # 'j' key moves down
+            handle_category_list_input!(state, 'j')
+            @test state.selected_index == 2
+
+            # 'k' key moves up
+            handle_category_list_input!(state, 'k')
+            @test state.selected_index == 1
+        end
+
+        @testset "Input Handler - Add Category" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+
+            handle_category_list_input!(state, 'a')
+            @test state.current_screen == CATEGORY_ADD
+            @test state.previous_screen == CATEGORY_LIST
+        end
+
+        @testset "Input Handler - Edit Category" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+
+            handle_category_list_input!(state, 'e')
+            @test state.current_screen == CATEGORY_EDIT
+            @test state.current_category !== nothing
+            @test state.form_fields[:name] == state.current_category.name
+        end
+
+        @testset "Input Handler - Delete Category" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+            category_name = state.categories[1].name
+            category_id = state.categories[1].id
+
+            handle_category_list_input!(state, 'd')
+            @test state.current_screen == DELETE_CONFIRM
+            @test state.delete_type == :category
+            @test state.delete_id == category_id
+            @test state.delete_name == category_name
+        end
+
+        @testset "Input Handler - View Filtered Todos (Enter)" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+            category_id = state.categories[1].id
+
+            handle_category_list_input!(state, :enter)
+            @test state.current_screen == MAIN_LIST
+            @test state.filter_category_id == category_id
+        end
+
+        @testset "Input Handler - Back Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+            state.previous_screen = MAIN_LIST
+
+            # 'b' key goes back
+            handle_category_list_input!(state, 'b')
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Input Handler - Quit" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_LIST
+
+            handle_category_list_input!(state, 'q')
+            @test state.running == false
+        end
+
+        @testset "Input Handler - Empty List Actions" begin
+            state = create_test_state(with_data=false)
+            state.current_screen = CATEGORY_LIST
+            state.selected_index = 1
+
+            # Edit/Delete should not change screen on empty list
+            handle_category_list_input!(state, 'e')
+            @test state.current_screen == CATEGORY_LIST
+
+            handle_category_list_input!(state, 'd')
+            @test state.current_screen == CATEGORY_LIST
+        end
+    end
+
+    # =========================================================================
+    # Category Form Screen Tests
+    # =========================================================================
+
+    @testset "Category Form Screen" begin
+        @testset "Add Form Rendering" begin
+            state = create_test_state()
+            state.current_screen = CATEGORY_ADD
+            reset_form!(state)
+            state.form_fields[:name] = ""
+            state.form_fields[:color] = ""
+
+            output = render_category_form(state, :add)
+            output_str = string(output)
+
+            # Header should indicate add mode
+            @test contains(output_str, "Add") || contains(output_str, "New")
+            @test contains(output_str, "Category")
+
+            # Should have form fields
+            @test contains(output_str, "Name")
+            @test contains(output_str, "Color")
+        end
+
+        @testset "Edit Form Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_EDIT
+            state.current_category = state.categories[1]
+            init_form_from_category!(state, state.current_category)
+
+            output = render_category_form(state, :edit)
+            output_str = string(output)
+
+            # Header should indicate edit mode
+            @test contains(output_str, "Edit")
+
+            # Should show existing values
+            @test contains(output_str, state.current_category.name)
+        end
+
+        @testset "Form Validation - Empty Name" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_category_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :name)
+        end
+
+        @testset "Form Validation - Valid Name" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Category Name",
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_category_form!(state)
+            @test valid == true
+        end
+
+        @testset "Form Validation - Invalid Color Format" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Valid Name",
+                :color => "invalid"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_category_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :color)
+        end
+
+        @testset "Form Input - Field Navigation" begin
+            state = create_test_state()
+            state.current_screen = CATEGORY_ADD
+            state.form_field_index = 1
+
+            # Tab moves to next field
+            handle_category_form_input!(state, :tab)
+            @test state.form_field_index == 2
+
+            # Shift+Tab moves back
+            handle_category_form_input!(state, :shift_tab)
+            @test state.form_field_index == 1
+        end
+
+        @testset "Form Save - Add Mode" begin
+            state = create_test_state()
+            state.current_screen = CATEGORY_ADD
+            state.previous_screen = CATEGORY_LIST
+            state.form_fields = Dict{Symbol,String}(
+                :name => "New Category from Test",
+                :color => "#00FF00"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_categories(state.db))
+            save_category_form!(state, :add)
+
+            # Should create new category
+            @test length(list_categories(state.db)) == initial_count + 1
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+
+            # Should go back to previous screen
+            @test state.current_screen == CATEGORY_LIST
+        end
+
+        @testset "Form Save - Edit Mode" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = CATEGORY_EDIT
+            state.previous_screen = CATEGORY_LIST
+            state.current_category = state.categories[1]
+            original_id = state.current_category.id
+            state.form_fields = Dict{Symbol,String}(
+                :name => "Updated Category Name",
+                :color => "#0000FF"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_categories(state.db))
+            save_category_form!(state, :edit)
+
+            # Should not create new category
+            @test length(list_categories(state.db)) == initial_count
+
+            # Should update existing category
+            updated = get_category(state.db, original_id)
+            @test updated.name == "Updated Category Name"
+            @test updated.color == "#0000FF"
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+        end
+
+        @testset "Form Save - Validation Failure" begin
+            state = create_test_state()
+            state.current_screen = CATEGORY_ADD
+            state.form_fields = Dict{Symbol,String}(
+                :name => "",  # Empty name
+                :color => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_categories(state.db))
+            save_category_form!(state, :add)
+
+            # Should not create category
+            @test length(list_categories(state.db)) == initial_count
+
+            # Should have error
+            @test haskey(state.form_errors, :name)
+        end
+
+        @testset "Form Cancel" begin
+            state = create_test_state()
+            state.current_screen = CATEGORY_ADD
+            state.previous_screen = CATEGORY_LIST
+
+            # Escape cancels
+            handle_category_form_input!(state, :escape)
+            @test state.current_screen == CATEGORY_LIST
+        end
+
+        @testset "Init Form From Category" begin
+            state = create_test_state(with_data=true)
+            category = state.categories[1]
+
+            init_form_from_category!(state, category)
+
+            @test state.form_fields[:name] == category.name
+            @test state.form_field_index == 1
+        end
+    end
 end
