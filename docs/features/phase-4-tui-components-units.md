@@ -13,7 +13,7 @@
 | 1 | TUI Foundation | ⬜ MERGED | 1-3 | #5 |
 | 2 | Data Display Components | ⬜ MERGED | 4, 6 | #5 |
 | 3 | Form Components | ⬜ MERGED | 5 | #5 |
-| 4 | Main List Screen | ✅ VERIFIED | 7-8 | - |
+| 4 | Main List Screen | ⬜ MERGED | 7-8 | #6 |
 | 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
 | 7 | Entity Management | 🔵 PENDING | 12-13 | - |
@@ -135,7 +135,7 @@ src/tui/components/form.jl    # Form input components (424 lines)
 
 ## Unit 4: Main List Screen
 
-**Status:** ✅ VERIFIED
+**Status:** ⬜ MERGED (PR #6)
 **Plan Steps:** 7, 8
 **Depends On:** Units 1, 2
 
@@ -308,14 +308,9 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Unit 4 VERIFIED, ready for PR
+**Current:** Unit 4 MERGED (PR #6)
 
 **Next step:** CLEAR CONTEXT, then run:
-```
-/commit-push-pr
-```
-
-After PR merged, proceed to Unit 5 with:
 ```
 /implement-step docs/features/phase-4-tui-components-units.md 5
 ```
