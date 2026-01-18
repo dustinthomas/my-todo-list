@@ -12,7 +12,7 @@
 |----|-------|----------|--------|--------|
 | BUG-001 | Text input not populating in form fields | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
-| BUG-003 | Table column misalignment | MEDIUM | VERIFIED | bugfix/tui-table-alignment |
+| BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
@@ -137,10 +137,11 @@ Possible solutions:
 ## BUG-003: Table column misalignment
 
 **Priority:** MEDIUM
-**Status:** VERIFIED
+**Status:** MERGED (PR #12)
 **Discovered:** 2026-01-18 during manual testing
 **Fixed:** 2026-01-18
 **Verified:** 2026-01-18
+**Merged:** 2026-01-18
 **Branch:** bugfix/tui-table-alignment
 
 ### Description
@@ -263,3 +264,4 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 | 2026-01-18 | BUG-003 IN_PROGRESS | Starting fix for table column misalignment. Root cause: rpad() counts style tags. |
 | 2026-01-18 | BUG-003 FIXED | Added visible_length() and styled_rpad() helpers. Fixed header column width mismatch. All tests pass (960/960). |
 | 2026-01-18 | BUG-003 VERIFIED | Manual testing confirms columns now align correctly. |
+| 2026-01-18 | BUG-003 MERGED | PR #12 merged to main. |
