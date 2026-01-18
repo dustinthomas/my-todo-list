@@ -17,7 +17,7 @@
 | 5 | Todo CRUD Screens | ⬜ MERGED | 9-10 | #7 |
 | 6 | Filter System | ⬜ MERGED | 11 | #8 |
 | 7 | Entity Management | ⬜ MERGED | 12-13 | #9 |
-| 8 | Integration & Polish | 🟢 IMPLEMENTED | 14-16 | - |
+| 8 | Integration & Polish | ⬜ MERGED | 14-16 | #10 |
 
 **Legend:** 🔵 PENDING | 🟡 IN_PROGRESS | 🟢 IMPLEMENTED | ✅ VERIFIED | ⬜ MERGED | 🔴 FAILED | ⚫ BLOCKED
 
@@ -291,7 +291,7 @@ src/tui/screens/category_form.jl  # Category add/edit (269 lines)
 
 ## Unit 8: Integration & Polish
 
-**Status:** 🟢 IMPLEMENTED
+**Status:** ⬜ MERGED (PR #10)
 **Plan Steps:** 14, 15, 16
 **Depends On:** Units 1-7
 
@@ -337,14 +337,14 @@ test/runtests.jl                   # Added integration test include
 
 ## Next Action
 
-**Current:** Unit 8 VERIFIED (automated tests)
+**Current:** All 8 Units MERGED. Phase 4 TUI implementation complete.
 
-**MANUAL TESTING REQUIRED** before PR. See checklist below.
+**BUGS FOUND** during manual testing. See `docs/bugs/tui-bugs.md` for tracking.
 
-**Next step after manual testing:** CLEAR CONTEXT, then run:
-```
-/commit-push-pr
-```
+**Next step:** Fix bugs in order:
+1. `bugfix/tui-raw-terminal` → BUG-001 + BUG-002 (TTY detection)
+2. `bugfix/tui-db-locked` → BUG-004 (database locked)
+3. `bugfix/tui-table-alignment` → BUG-003 (table alignment)
 
 ### Manual Test Checklist (from plans/phase-4-tui-components.md Step 16)
 
