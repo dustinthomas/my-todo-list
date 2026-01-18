@@ -14,7 +14,7 @@
 | 2 | Data Display Components | ⬜ MERGED | 4, 6 | #5 |
 | 3 | Form Components | ⬜ MERGED | 5 | #5 |
 | 4 | Main List Screen | ⬜ MERGED | 7-8 | #6 |
-| 5 | Todo CRUD Screens | ✅ VERIFIED | 9-10 | - |
+| 5 | Todo CRUD Screens | ⬜ MERGED | 9-10 | #7 |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
 | 7 | Entity Management | 🔵 PENDING | 12-13 | - |
 | 8 | Integration & Polish | 🔵 PENDING | 14-16 | - |
@@ -172,7 +172,7 @@ test/test_tui_screens.jl      # Screen tests (301 lines)
 
 ## Unit 5: Todo CRUD Screens
 
-**Status:** ✅ VERIFIED
+**Status:** ⬜ MERGED (PR #7)
 **Plan Steps:** 9, 10
 **Depends On:** Units 1, 2, 3, 4
 
@@ -312,14 +312,9 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Unit 5 VERIFIED
+**Current:** Unit 5 MERGED (PR #7)
 
 **Next step:** CLEAR CONTEXT, then run:
-```
-/commit-push-pr
-```
-
-After PR merged, proceed to Unit 6:
 ```
 /implement-step docs/features/phase-4-tui-components-units.md 6
 ```
