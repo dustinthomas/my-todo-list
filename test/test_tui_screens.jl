@@ -2,8 +2,9 @@
 Tests for TUI screens.
 
 Tests cover:
-- Main list screen rendering
-- Main list input handling
+- Main list screen rendering and input handling
+- Todo detail screen rendering and input handling
+- Todo form screen rendering, validation, save, and input handling
 - Navigation and screen transitions
 
 Note: Visual appearance (colors, alignment) requires MANUAL TESTING.
@@ -296,6 +297,488 @@ include("tui_test_helpers.jl")
             state.filter_status = "pending"
             subtitle = build_filter_subtitle(state)
             @test contains(subtitle, "pending") || contains(subtitle, "Filter")
+        end
+    end
+
+    # =========================================================================
+    # Todo Detail Screen Tests
+    # =========================================================================
+
+    @testset "Todo Detail Screen" begin
+        @testset "Rendering - Basic" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.current_todo = state.todos[1]
+
+            output = render_todo_detail(state)
+            output_str = string(output)
+
+            # Should have header with title
+            @test contains(output_str, "Todo Detail") || contains(output_str, "Detail")
+
+            # Should show todo title
+            @test contains(output_str, state.current_todo.title)
+
+            # Should show status field
+            @test contains(output_str, "Status")
+            @test contains(output_str, state.current_todo.status)
+
+            # Should show priority field
+            @test contains(output_str, "Priority")
+
+            # Footer shortcuts should be present
+            @test contains(output_str, "Back") || contains(output_str, "b")
+            @test contains(output_str, "Edit") || contains(output_str, "e")
+        end
+
+        @testset "Rendering - All Fields Present" begin
+            state = create_test_state(with_data=true)
+            state.current_todo = state.todos[1]
+
+            output = render_todo_detail(state)
+            output_str = string(output)
+
+            # Required fields
+            @test contains(output_str, "Title")
+            @test contains(output_str, "Status")
+            @test contains(output_str, "Priority")
+
+            # Optional fields (labels should be present even if empty)
+            @test contains(output_str, "Description") || contains(output_str, "description")
+            @test contains(output_str, "Project") || contains(output_str, "project")
+            @test contains(output_str, "Category") || contains(output_str, "category")
+        end
+
+        @testset "Rendering - With All Data" begin
+            state = create_test_state(with_data=true)
+            # Use the first todo which has project and category assigned
+            state.current_todo = state.todos[1]
+
+            output = render_todo_detail(state)
+            output_str = string(output)
+
+            # Should show project name if assigned
+            if state.current_todo.project_id !== nothing
+                @test contains(output_str, "Test Project")
+            end
+
+            # Should show category name if assigned
+            if state.current_todo.category_id !== nothing
+                @test contains(output_str, "Test Category")
+            end
+        end
+
+        @testset "Input Handler - Back Navigation" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.previous_screen = MAIN_LIST
+            state.current_todo = state.todos[1]
+
+            # 'b' key goes back
+            handle_todo_detail_input!(state, 'b')
+            @test state.current_screen == MAIN_LIST
+
+            # Reset state
+            state.current_screen = TODO_DETAIL
+            state.previous_screen = MAIN_LIST
+
+            # Escape key also goes back
+            handle_todo_detail_input!(state, :escape)
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Input Handler - Edit Transition" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.current_todo = state.todos[1]
+
+            # 'e' key goes to edit
+            handle_todo_detail_input!(state, 'e')
+            @test state.current_screen == TODO_EDIT
+            @test state.previous_screen == TODO_DETAIL
+            # Form should be initialized with todo data
+            @test state.form_fields[:title] == state.current_todo.title
+        end
+
+        @testset "Input Handler - Delete Transition" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.current_todo = state.todos[1]
+            todo_title = state.current_todo.title
+            todo_id = state.current_todo.id
+
+            # 'd' key goes to delete confirmation
+            handle_todo_detail_input!(state, 'd')
+            @test state.current_screen == DELETE_CONFIRM
+            @test state.delete_type == :todo
+            @test state.delete_id == todo_id
+            @test state.delete_name == todo_title
+        end
+
+        @testset "Input Handler - Quit" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.current_todo = state.todos[1]
+
+            # 'q' quits
+            handle_todo_detail_input!(state, 'q')
+            @test state.running == false
+        end
+
+        @testset "Input Handler - Invalid Key" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_DETAIL
+            state.current_todo = state.todos[1]
+
+            # Invalid key should not change screen
+            handle_todo_detail_input!(state, 'x')
+            @test state.current_screen == TODO_DETAIL
+        end
+    end
+
+    # =========================================================================
+    # Todo Form Screen Tests
+    # =========================================================================
+
+    @testset "Todo Form Screen" begin
+        @testset "Add Form Rendering" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            reset_form!(state)
+            state.form_fields[:title] = ""
+            state.form_fields[:description] = ""
+            state.form_fields[:status] = "pending"
+            state.form_fields[:priority] = "2"
+            state.form_fields[:start_date] = ""
+            state.form_fields[:due_date] = ""
+
+            output = render_todo_form(state, :add)
+            output_str = string(output)
+
+            # Header should indicate add mode
+            @test contains(output_str, "Add") || contains(output_str, "New")
+
+            # Should have form fields
+            @test contains(output_str, "Title")
+            @test contains(output_str, "Description")
+            @test contains(output_str, "Status")
+            @test contains(output_str, "Priority")
+
+            # Footer should have save/cancel
+            @test contains(output_str, "Save") || contains(output_str, "Enter")
+            @test contains(output_str, "Cancel") || contains(output_str, "Esc")
+        end
+
+        @testset "Edit Form Rendering" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_EDIT
+            state.current_todo = state.todos[1]
+            init_form_from_todo!(state, state.current_todo)
+
+            output = render_todo_form(state, :edit)
+            output_str = string(output)
+
+            # Header should indicate edit mode
+            @test contains(output_str, "Edit")
+
+            # Should show existing values
+            @test contains(output_str, state.current_todo.title)
+        end
+
+        @testset "Form Rendering - With Validation Errors" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_fields[:title] = ""
+            state.form_errors[:title] = "Title is required"
+
+            output = render_todo_form(state, :add)
+            output_str = string(output)
+
+            # Error message should appear
+            @test contains(output_str, "Title is required") || contains(output_str, "required")
+        end
+
+        @testset "Form Validation - Empty Title" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :title => "",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_todo_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :title)
+        end
+
+        @testset "Form Validation - Valid Title" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Valid Title",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_todo_form!(state)
+            @test valid == true
+            @test !haskey(state.form_errors, :title)
+        end
+
+        @testset "Form Validation - Invalid Date Format" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Valid Title",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "invalid-date",
+                :due_date => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_todo_form!(state)
+            @test valid == false
+            @test haskey(state.form_errors, :start_date)
+        end
+
+        @testset "Form Validation - Valid Date Format" begin
+            state = create_test_state()
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Valid Title",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "2026-01-20",
+                :due_date => "2026-02-01"
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            valid = validate_todo_form!(state)
+            @test valid == true
+            @test !haskey(state.form_errors, :start_date)
+            @test !haskey(state.form_errors, :due_date)
+        end
+
+        @testset "Form Input - Field Navigation Tab" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_field_index = 1
+
+            # Tab moves to next field
+            handle_todo_form_input!(state, :tab)
+            @test state.form_field_index == 2
+
+            handle_todo_form_input!(state, :tab)
+            @test state.form_field_index == 3
+        end
+
+        @testset "Form Input - Field Navigation Shift+Tab" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_field_index = 3
+
+            # Shift+Tab moves to previous field
+            handle_todo_form_input!(state, :shift_tab)
+            @test state.form_field_index == 2
+
+            handle_todo_form_input!(state, :shift_tab)
+            @test state.form_field_index == 1
+
+            # Can't go below 1
+            handle_todo_form_input!(state, :shift_tab)
+            @test state.form_field_index == 1
+        end
+
+        @testset "Form Input - Navigation with j/k" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_field_index = 1
+
+            # 'j' moves to next field
+            handle_todo_form_input!(state, 'j')
+            @test state.form_field_index == 2
+
+            # 'k' moves to previous field
+            handle_todo_form_input!(state, 'k')
+            @test state.form_field_index == 1
+        end
+
+        @testset "Form Save - Add Mode" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_fields = Dict{Symbol,String}(
+                :title => "New Todo from Test",
+                :description => "Test description",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "",
+                :category_id => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_todos(state.db))
+            save_todo_form!(state, :add)
+
+            # Should create new todo
+            @test length(list_todos(state.db)) == initial_count + 1
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+
+            # Should go back to previous screen
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Form Save - Edit Mode" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_EDIT
+            state.previous_screen = MAIN_LIST
+            state.current_todo = state.todos[1]
+            original_id = state.current_todo.id
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Updated Todo Title",
+                :description => "Updated description",
+                :status => "in_progress",
+                :priority => "1",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "",
+                :category_id => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_todos(state.db))
+            save_todo_form!(state, :edit)
+
+            # Should not create new todo
+            @test length(list_todos(state.db)) == initial_count
+
+            # Should update existing todo
+            updated = get_todo(state.db, original_id)
+            @test updated.title == "Updated Todo Title"
+            @test updated.status == "in_progress"
+            @test updated.priority == 1
+
+            # Should have success message
+            @test state.message !== nothing
+            @test state.message_type == :success
+
+            # Should go back to previous screen
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Form Save - Validation Failure" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_fields = Dict{Symbol,String}(
+                :title => "",  # Empty title - should fail
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "",
+                :category_id => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_todos(state.db))
+            save_todo_form!(state, :add)
+
+            # Should not create todo
+            @test length(list_todos(state.db)) == initial_count
+
+            # Should stay on form screen
+            @test state.current_screen == TODO_ADD
+
+            # Should have error
+            @test haskey(state.form_errors, :title)
+        end
+
+        @testset "Form Cancel" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_fields[:title] = "Will be cancelled"
+
+            # Escape cancels
+            handle_todo_form_input!(state, :escape)
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Init Form From Todo" begin
+            state = create_test_state(with_data=true)
+            todo = state.todos[1]
+
+            init_form_from_todo!(state, todo)
+
+            @test state.form_fields[:title] == todo.title
+            @test state.form_fields[:status] == todo.status
+            @test state.form_fields[:priority] == string(todo.priority)
+        end
+
+        @testset "Form Save with Project and Category" begin
+            state = create_test_state(with_data=true)
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Todo with relations",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "1",  # Test Project
+                :category_id => "1"  # Test Category
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            save_todo_form!(state, :add)
+
+            # Find the created todo
+            todos = list_todos(state.db)
+            new_todo = findfirst(t -> t.title == "Todo with relations", todos)
+            @test new_todo !== nothing
+            @test todos[new_todo].project_id == 1
+            @test todos[new_todo].category_id == 1
+        end
+
+        @testset "Form Input - Enter on Save Button" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_field_index = 7  # Assuming 6 fields + Save button position
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Test via Enter",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "",
+                :category_id => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_todos(state.db))
+
+            # Enter should trigger save
+            handle_todo_form_input!(state, :enter)
+
+            # Should have created the todo
+            @test length(list_todos(state.db)) == initial_count + 1
         end
     end
 end

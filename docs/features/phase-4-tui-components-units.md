@@ -14,7 +14,7 @@
 | 2 | Data Display Components | ⬜ MERGED | 4, 6 | #5 |
 | 3 | Form Components | ⬜ MERGED | 5 | #5 |
 | 4 | Main List Screen | ⬜ MERGED | 7-8 | #6 |
-| 5 | Todo CRUD Screens | 🔵 PENDING | 9-10 | - |
+| 5 | Todo CRUD Screens | ✅ VERIFIED | 9-10 | - |
 | 6 | Filter System | 🔵 PENDING | 11 | - |
 | 7 | Entity Management | 🔵 PENDING | 12-13 | - |
 | 8 | Integration & Polish | 🔵 PENDING | 14-16 | - |
@@ -172,7 +172,7 @@ test/test_tui_screens.jl      # Screen tests (301 lines)
 
 ## Unit 5: Todo CRUD Screens
 
-**Status:** 🔵 PENDING
+**Status:** ✅ VERIFIED
 **Plan Steps:** 9, 10
 **Depends On:** Units 1, 2, 3, 4
 
@@ -181,25 +181,29 @@ test/test_tui_screens.jl      # Screen tests (301 lines)
 - Todo add/edit form screens
 - Form validation and save logic
 
-### Files to Create
+### Files Created
 ```
-src/tui/screens/todo_detail.jl  # Detail view
-src/tui/screens/todo_form.jl    # Add/Edit forms
+src/tui/screens/todo_detail.jl  # Detail view (231 lines)
+src/tui/screens/todo_form.jl    # Add/Edit forms (341 lines)
+test/test_tui_screens.jl        # Updated with 74 new tests (784 total lines)
 ```
 
 ### Acceptance Criteria
-- [ ] `render_todo_detail()` shows all fields
-- [ ] `handle_todo_detail_input!()` for back, edit, delete
-- [ ] `render_todo_form()` for add and edit modes
-- [ ] `handle_todo_form_input!()` for field navigation, save, cancel
-- [ ] `validate_todo_form!()` validates required fields, dates
-- [ ] `save_todo_form!()` creates/updates todo
-- [ ] `init_form_from_todo!()` populates edit form
-- [ ] All todo screen tests pass
+- [x] `render_todo_detail()` shows all fields
+- [x] `handle_todo_detail_input!()` for back, edit, delete
+- [x] `render_todo_form()` for add and edit modes
+- [x] `handle_todo_form_input!()` for field navigation, save, cancel
+- [x] `validate_todo_form!()` validates required fields, dates
+- [x] `save_todo_form!()` creates/updates todo
+- [x] `init_form_from_todo!()` populates edit form
+- [x] All todo screen tests pass (74 new tests)
 
 ### Session Log
 | Date | Action | Notes |
 |------|--------|-------|
+| 2026-01-18 | IN_PROGRESS | Starting implementation. Branch: feature/tui-components-unit-5 |
+| 2026-01-18 | IMPLEMENTED | All screens complete. 604 total tests pass (170 DB + 434 TUI). Ready for verification. |
+| 2026-01-18 | VERIFIED | All 8 acceptance criteria pass. 604/604 tests pass. Ready for PR. |
 
 ---
 
@@ -308,9 +312,14 @@ test/test_tui_integration.jl       # Integration tests
 
 ## Next Action
 
-**Current:** Unit 4 MERGED (PR #6)
+**Current:** Unit 5 VERIFIED
 
 **Next step:** CLEAR CONTEXT, then run:
 ```
-/implement-step docs/features/phase-4-tui-components-units.md 5
+/commit-push-pr
+```
+
+After PR merged, proceed to Unit 6:
+```
+/implement-step docs/features/phase-4-tui-components-units.md 6
 ```
