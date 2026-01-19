@@ -168,6 +168,7 @@ PENDING → IN_PROGRESS → IMPLEMENTED → VERIFIED → MERGED
 | Planner | `/plan-feature` | Feature spec | Plan + Work units files |
 | Implementer | `/implement-step UNITS-FILE N` | Work unit N | Code + tests for unit N |
 | Tester | `/verify-feature UNITS-FILE N` | Work unit N | PASS/FAIL report |
+| Bug Documenter | `/document-bug` | Bug description | Bug entry in docs/bugs/ |
 | Bug Fixer | `/fix-bug BUG-ID` | Bug ID from docs/bugs/ | Fixed code + updated bug doc |
 | Refactorer | `/simplify` | File or feature | Improved code |
 | Shipper | `/commit-push-pr` | Branch | Commit + PR |
@@ -184,6 +185,7 @@ Context MUST be cleared between:
 - Tester → Implementer (on FAIL)
 - Tester → Shipper (on PASS)
 - Unit N → Unit N+1
+- Bug Documenter → Bug Fixer (when user wants to fix immediately)
 - Bug Fixer → Shipper (after fix)
 - Bug Fixer → Verifier (for manual verification)
 - Bug N → Bug N+1 (for unrelated bugs)
@@ -202,6 +204,7 @@ Context MUST be cleared between:
 | Planner | CLAUDE.md, Feature spec | Existing code patterns |
 | Implementer | CLAUDE.md, Work units file, Plan | Source files for unit |
 | Tester | CLAUDE.md, Work units file | Test files, source files |
+| Bug Documenter | CLAUDE.md, Existing bug docs (docs/bugs/) | Source files for context |
 | Bug Fixer | CLAUDE.md, Bug doc (docs/bugs/) | Source files for bug |
 | Refactorer | CLAUDE.md, Source files | Tests |
 | Shipper | CLAUDE.md, Git status | Work units file, Bug doc |
@@ -298,6 +301,7 @@ my-todo-list/
 | Context | Branch Prefix | Example | When to Use |
 |---------|---------------|---------|-------------|
 | Planner | N/A | N/A | Read-only; no branch needed (creates plan files only) |
+| Bug Documenter | N/A | N/A | Read-only; no branch needed (creates bug docs only) |
 | Implementer | `feature/` | `feature/cli-commands` | Adding new features or capabilities |
 | Tester | `bugfix/` or `test/` | `bugfix/fix-date-parsing` | Fixing test failures or adding tests |
 | Refactor | `refactor/` | `refactor/simplify-queries` | Code improvements without behavior changes |
