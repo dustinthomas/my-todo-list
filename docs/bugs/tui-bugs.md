@@ -13,7 +13,7 @@
 | BUG-001 | Text input not populating in form fields | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
-| BUG-004 | Database locked error on save | HIGH | FIXED | bugfix/tui-db-locked |
+| BUG-004 | Database locked error on save | HIGH | MERGED (PR #14) | bugfix/tui-db-locked |
 | BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
 
@@ -201,9 +201,11 @@ Added tests for:
 ## BUG-004: Database locked error on save
 
 **Priority:** HIGH
-**Status:** FIXED
+**Status:** MERGED (PR #14)
 **Discovered:** 2026-01-18 during manual testing
 **Fixed:** 2026-01-20
+**Verified:** 2026-01-20
+**Merged:** 2026-01-20
 **Branch:** bugfix/tui-db-locked
 
 ### Description
@@ -373,7 +375,7 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
    - Branch: `bugfix/tui-table-alignment`
    - Fix: Added `visible_length()` and `styled_rpad()` helpers
 
-3. ~~**BUG-004** (database locked)~~ ✅ FIXED
+3. ~~**BUG-004** (database locked)~~ ✅ MERGED (PR #14)
    - Branch: `bugfix/tui-db-locked`
    - Fix: Added `busy_timeout` and WAL mode PRAGMA settings in `src/database.jl`
 
@@ -410,3 +412,5 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 | 2026-01-20 | BUG-005/006 VERIFIED | Manual testing confirms navigation behavior works correctly. |
 | 2026-01-20 | BUG-005/006 MERGED | PR #13 merged to main. |
 | 2026-01-20 | BUG-004 FIXED | Added PRAGMA busy_timeout=5000 and journal_mode=WAL in connect_database(). All tests pass (960/960). |
+| 2026-01-20 | BUG-004 VERIFIED | Manual testing in Docker confirms database operations work without lock errors. |
+| 2026-01-20 | BUG-004 MERGED | PR #14 merged to main. |
