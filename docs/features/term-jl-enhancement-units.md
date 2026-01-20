@@ -23,7 +23,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 |------|------|--------|--------|-----|
 | 1 | Category Table with Term.jl | MERGED | refactor/term-jl-category-table | #15 |
 | 2 | Project Table with Term.jl | MERGED | refactor/term-jl-project-table | #16 |
-| 3 | Todo Table with Term.jl | PENDING | - | - |
+| 3 | Todo Table with Term.jl | VERIFIED | refactor/term-jl-todo-table | - |
 | 4 | Layout Operators for List Screens | PENDING | - | - |
 | 5 | Layout Operators for Detail/Filter Screens | PENDING | - | - |
 | 6 | Enhanced Panel Styling | PENDING | - | - |
@@ -103,7 +103,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 3: Todo Table with Term.jl
 
-**Status:** PENDING
+**Status:** VERIFIED
 **Branch:** `refactor/term-jl-todo-table`
 **Plan Steps:** 7, 8, 9
 **Depends On:** Unit 1, Unit 2
@@ -114,17 +114,17 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 - Handle 5 columns with styled content (status, priority)
 
 **Acceptance Criteria:**
-- [ ] Todo table renders using `Term.Tables.Table`
-- [ ] Selection indicator visible on selected row
-- [ ] Columns: #, Title, Status, Priority, Due Date all display
-- [ ] Status column has correct colors (yellow/blue/green/red)
-- [ ] Priority column has correct colors (red/yellow/dim)
-- [ ] Scrolling works: only visible rows shown
-- [ ] Scroll indicator shows "Showing X-Y of Z" when needed
-- [ ] Empty state message works ("No todos found")
-- [ ] All main list tests pass
+- [x] Todo table renders using `Term.Tables.Table`
+- [x] Selection indicator visible on selected row
+- [x] Columns: #, Title, Status, Priority, Due Date all display
+- [x] Status column has correct colors (yellow/blue/green/red)
+- [x] Priority column has correct colors (red/yellow/dim)
+- [x] Scrolling works: only visible rows shown
+- [x] Scroll indicator shows "Showing X-Y of Z" when needed
+- [x] Empty state message works ("No todos found")
+- [x] All main list tests pass
 - [ ] Manual testing: scroll up/down with j/k keys
-- [ ] No regressions
+- [x] No regressions
 
 **Estimated Files:** 2 files, ~150 lines changed
 
@@ -296,6 +296,50 @@ Track work sessions for handoff context:
   - ✓ No regressions in other screens (all 960 tests passing)
 - Nil description renders as empty cell, nil color renders as dimmed dash (—)
 - Pattern consistent with Unit 1 category table
+- Unit ready for shipping
+
+### 2026-01-20 - Implementer: Unit 3
+**Session:** Implementer
+**Result:** Complete
+**Notes:**
+- Applied same Term.jl Table pattern from Units 1 and 2 to todo table
+- Replaced manual ASCII table with Term.jl Tables.Table:
+  - Fixed column widths: [8, 30, 13, 10, 12] for #, Title, Status, Priority, Due Date
+  - box=:SIMPLE style (consistent with category and project tables)
+  - Selection indicator (►) with cyan bold styling
+  - Status formatting with colors (yellow/blue/green/red)
+  - Priority formatting with colors (red/yellow/dim)
+- Scrolling handled by slicing data before building Table
+- Scroll indicator appended after table when list > visible_rows
+- Updated test_tui_components.jl:
+  - Modified "Table Alignment with Styled Content" test to work with Term.jl Table format
+  - Test now verifies header columns and data content presence
+  - Term.jl Table handles alignment automatically for styled content
+- All 967 tests pass (170 TodoList + 797 TUI)
+- Files modified:
+  - src/tui/components/table.jl (~40 lines changed in render_todo_table)
+  - test/test_tui_components.jl (~20 lines changed in alignment test)
+- Ready for verification
+
+### 2026-01-20 - Tester: Unit 3
+**Session:** Tester
+**Result:** PASS
+**Notes:**
+- All 967 tests pass (170 TodoList + 797 TUI)
+- Acceptance criteria verification:
+  - ✓ Todo table renders using Term.Tables.Table (lines 223-228 in table.jl)
+  - ✓ Selection indicator (►) visible on selected row (cyan bold styling)
+  - ✓ Columns #, Title, Status, Priority, Due Date all display correctly
+  - ✓ Status colors: pending=yellow, in_progress=blue, completed=green, blocked=red
+  - ✓ Priority colors: HIGH=red bold, MEDIUM=yellow, LOW=dim
+  - ✓ Scrolling works: only visible rows shown (verified with offset=0,5,10)
+  - ✓ Scroll indicator shows "Showing X-Y of Z" when list > visible_rows
+  - ✓ Empty state message works ("No todos found. Press 'a' to add...")
+  - ✓ All main list tests pass
+  - ⚠ Manual j/k key testing requires interactive TUI (not verifiable in automated tests)
+  - ✓ No regressions in other screens (all 967 tests passing)
+- Term.jl converts style tags to ANSI escape codes (verified in raw output)
+- Pattern consistent with Units 1 and 2
 - Unit ready for shipping
 
 ---

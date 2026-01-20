@@ -163,7 +163,9 @@ end
 """
     render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offset::Int, visible_rows::Int)::String
 
-Render a table of todos with selection indicator.
+Render a table of todos with selection indicator using Term.jl Table.
+
+Uses Term.jl's built-in Table component for cleaner rendering and automatic styling.
 
 # Arguments
 - `todos::Vector{Todo}`: List of todos to display
@@ -176,8 +178,9 @@ Render a table of todos with selection indicator.
 
 # Features
 - Selection indicator (►) for current row
-- Status and priority formatting
+- Status and priority formatting with colors
 - Due date display
+- Scroll indicator when list exceeds visible rows
 - Empty state message when no todos
 """
 function render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offset::Int, visible_rows::Int)::String
@@ -188,43 +191,51 @@ function render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offs
     # Calculate visible range
     start_idx = scroll_offset + 1
     end_idx = min(scroll_offset + visible_rows, length(todos))
+    nrows = end_idx - start_idx + 1
 
-    # Build table rows
-    lines = String[]
+    # Build data matrix for Term.jl Table
+    # Columns: selector+ID, Title, Status, Priority, Due Date
+    data = Matrix{String}(undef, nrows, 5)
 
-    # Header row
-    # Column widths: selector(1) + space(1) + id(3) = 5, title(30), status(11), priority(8), date(10)
-    push!(lines, "{bold}    # │ Title                          │ Status      │ Priority │ Due Date   {/bold}")
-    push!(lines, "──────┼────────────────────────────────┼─────────────┼──────────┼────────────")
-
-    for i in start_idx:end_idx
+    for (row_idx, i) in enumerate(start_idx:end_idx)
         todo = todos[i]
 
-        # Selection indicator
+        # Selection indicator + ID in first column
         selector = i == selected_index ? "{cyan bold}►{/cyan bold}" : " "
-
-        # Format fields
         id_str = lpad(string(todo.id), 3)
-        title = truncate_string(todo.title, 30)
-        title_padded = rpad(title, 30)
-        status = format_status(todo.status)
-        priority = format_priority(todo.priority)
-        due_date = todo.due_date !== nothing ? todo.due_date : "{dim}—{/dim}"
+        data[row_idx, 1] = "$selector $id_str"
 
-        # Build row - use styled_rpad for columns with style tags
-        status_padded = styled_rpad(status, 11)
-        priority_padded = styled_rpad(priority, 8)
-        row = "$selector $id_str │ $title_padded │ $status_padded │ $priority_padded │ $due_date"
-        push!(lines, row)
+        # Title (truncated if needed)
+        data[row_idx, 2] = truncate_string(todo.title, 28)
+
+        # Status with color formatting
+        data[row_idx, 3] = format_status(todo.status)
+
+        # Priority with color formatting
+        data[row_idx, 4] = format_priority(todo.priority)
+
+        # Due date (or placeholder)
+        data[row_idx, 5] = todo.due_date !== nothing ? todo.due_date : "{dim}—{/dim}"
     end
+
+    # Create Term.jl Table with fixed column widths for consistency
+    # Note: First column needs extra width to account for Term.jl style tags
+    tbl = Table(
+        data,
+        header=["#", "Title", "Status", "Priority", "Due Date"],
+        columns_widths=[8, 30, 13, 10, 12],
+        box=:SIMPLE
+    )
+
+    result = string(tbl)
 
     # Show scroll indicator if needed
     if length(todos) > visible_rows
         showing = "$start_idx-$end_idx of $(length(todos))"
-        push!(lines, "{dim}Showing $showing{/dim}")
+        result *= "\n{dim}Showing $showing{/dim}"
     end
 
-    return join(lines, "\n")
+    return result
 end
 
 # =============================================================================
