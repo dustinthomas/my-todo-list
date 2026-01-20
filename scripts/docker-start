@@ -3,4 +3,8 @@
 set -e
 echo "Starting todo-list development environment..."
 docker-compose up -d
-echo "Backend container started. Use './scripts/docker-shell' to access."
+echo ""
+echo "Backend container started."
+echo "  - Packages will auto-sync if Manifest.toml changed (first startup after git pull)"
+echo "  - Use './scripts/docker-shell' to access the container"
+echo "  - Use './scripts/docker-sync' to manually sync packages"
