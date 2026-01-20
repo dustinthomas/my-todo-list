@@ -14,8 +14,11 @@
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
+| BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | OPEN | - |
+| BUG-006 | Error navigating past last submenu item | HIGH | OPEN | - |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
+**Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
 
 **Legend:** OPEN | IN_PROGRESS | FIXED | VERIFIED | WONTFIX
 
@@ -222,6 +225,97 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 3. Multiple threads/processes accessing same database file
 4. Connection not being reused properly across operations
 
+---
+
+## BUG-005: Form navigation enters submenu instead of next field
+
+**Priority:** MEDIUM
+**Status:** OPEN
+**Discovered:** 2026-01-18 during manual testing
+
+### Description
+When navigating the "Add New Todo" form using the down arrow key, pressing down on the Status field incorrectly enters the Status submenu (showing pending/in_progress/completed/blocked options) instead of moving to the next form field (Priority).
+
+### Screenshots
+`docs/bugs/screenshots/bug-005-status-error.png`
+
+### Steps to Reproduce
+1. Start TUI: `julia --project=. -e 'using TodoList; run_tui()'`
+2. Press 'a' to add a new todo
+3. Use down arrow to navigate from Title → Description → Status
+4. Press down arrow again while on Status field
+5. Observe: The Status submenu opens showing all status options
+
+### Expected Behavior
+Down arrow should navigate between top-level form fields in sequence:
+- Title → Description → Status → Priority → Start Date → Due Date → [Save] → [Cancel]
+
+The Status submenu should only be entered via Enter key or a specific "expand" action, not by down arrow navigation.
+
+### Actual Behavior
+Down arrow on Status field enters the Status submenu, drilling into the sub-options instead of moving to Priority.
+
+### Design Decision
+How should navigation behave at form boundaries?
+1. **Wrap around**: Last field → First field (and vice versa)
+2. **Stop at boundary**: Require explicit up/down to change direction ✅ **CHOSEN**
+3. **Hybrid**: Stop at boundaries but allow Tab to cycle
+
+**Decision:** Option 2 (stop at boundary) - can revisit if it feels cumbersome in practice.
+
+### Root Cause Analysis
+Likely in `src/tui/screens/todo_form.jl` or `src/tui/input.jl`. The form navigation logic is not distinguishing between:
+1. **Field navigation** (moving between form fields at same hierarchy level)
+2. **Menu navigation** (drilling into/selecting within a submenu)
+
+The down arrow should only trigger field navigation, not submenu entry.
+
+---
+
+## BUG-006: Error navigating past last submenu item
+
+**Priority:** HIGH
+**Status:** OPEN
+**Discovered:** 2026-01-18 during manual testing
+
+### Description
+When inside the Status submenu (due to BUG-005), navigating to the last item ("blocked") and pressing down arrow throws a `MethodError`.
+
+### Screenshots
+`docs/bugs/screenshots/bug-006-downarrow-error.png`
+
+### Steps to Reproduce
+1. Start TUI
+2. Press 'a' to add a new todo
+3. Navigate to Status field and enter submenu (via BUG-005 behavior)
+4. Press down arrow repeatedly until reaching "blocked" (last item)
+5. Press down arrow one more time
+6. Error appears
+
+### Expected Behavior
+When at the last submenu item, down arrow should either:
+1. Do nothing (stay on last item), or
+2. Wrap to first item, or
+3. Exit submenu and move to next form field
+
+### Actual Behavior
+```
+ERROR: MethodError: Cannot convert an object of type Nothing to an object of type String
+```
+
+Stack trace shows error originates in:
+- `handle_menu_navigation`
+- `handle_form_input`
+
+### Root Cause Analysis
+The navigation function returns `nothing` when attempting to navigate past the last item, but the calling code expects a `String` return type. Missing boundary check or improper handling of edge case.
+
+Likely location: `src/tui/screens/todo_form.jl` in `handle_menu_navigation` function.
+
+Possible fixes:
+1. Add boundary check to prevent navigation past last item
+2. Handle `nothing` return value gracefully in calling code
+3. Implement wrap-around behavior
 
 ---
 
@@ -229,20 +323,24 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 
 ### Recommended Fix Order
 
-1. **BUG-001 + BUG-002** (same root cause - fix together)
+1. ~~**BUG-001 + BUG-002** (same root cause - fix together)~~ ✅ MERGED (PR #11)
    - Branch: `bugfix/tui-raw-terminal`
    - Fix: Update `has_tty()` in `src/tui/tui.jl` to work in Docker
-   - This is blocking all TUI functionality
 
-2. **BUG-004** (database locked)
+2. ~~**BUG-003** (table alignment)~~ ✅ MERGED (PR #12)
+   - Branch: `bugfix/tui-table-alignment`
+   - Fix: Added `visible_length()` and `styled_rpad()` helpers
+
+3. **BUG-004** (database locked) - HIGH PRIORITY
    - Branch: `bugfix/tui-db-locked`
    - Fix: Investigate connection management in `src/tui/screens/todo_form.jl`
    - This prevents saving todos
 
-3. **BUG-003** (table alignment)
-   - Branch: `bugfix/tui-table-alignment`
-   - Fix: Review column widths in `src/tui/components/table.jl`
-   - Visual issue, lower priority
+4. **BUG-005 + BUG-006** (related navigation issues - fix together)
+   - Branch: `bugfix/tui-form-navigation`
+   - Fix: Refactor form navigation to separate field-level vs submenu navigation
+   - BUG-006 is a crash bug triggered by BUG-005's incorrect behavior
+   - **Design decision needed:** Boundary behavior (wrap vs stop)
 
 ### Workflow
 
@@ -265,3 +363,5 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 | 2026-01-18 | BUG-003 FIXED | Added visible_length() and styled_rpad() helpers. Fixed header column width mismatch. All tests pass (960/960). |
 | 2026-01-18 | BUG-003 VERIFIED | Manual testing confirms columns now align correctly. |
 | 2026-01-18 | BUG-003 MERGED | PR #12 merged to main. |
+| 2026-01-18 | BUG-005 documented | Form navigation enters Status submenu instead of moving to next field. |
+| 2026-01-18 | BUG-006 documented | MethodError crash when navigating past last submenu item. Related to BUG-005. |
