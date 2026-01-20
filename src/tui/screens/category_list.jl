@@ -85,7 +85,7 @@ function render_category_list(state::AppState)::String
         push!(lines, string(message))
     end
 
-    # Category table
+    # Category table (using Term.jl Table)
     todo_counts = get_category_todo_counts(state)
     table = render_category_table(
         state.categories,
