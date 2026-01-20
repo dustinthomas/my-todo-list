@@ -137,7 +137,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 4: Layout Operators for List Screens
 
-**Status:** PENDING
+**Status:** FAILED
 **Branch:** `refactor/term-jl-layout-lists`
 **Plan Steps:** 10, 11, 12, 13
 **Depends On:** Unit 1, Unit 2, Unit 3
@@ -342,13 +342,46 @@ Track work sessions for handoff context:
 - Pattern consistent with Units 1 and 2
 - Unit ready for shipping
 
+### 2026-01-20 - Implementer: Unit 4
+**Session:** Implementer
+**Result:** FAILED - Reverted
+**Notes:**
+- Spiked Term.jl `/` operator for vertical layout composition
+  - Panel / String → Renderable
+  - Panel / Panel → Renderable
+  - string(composed) converts result to String
+- Refactored all three list screens to use `/` operator
+- All 967 automated tests passed
+- **FAILED manual visual verification:**
+  - Headers repeated multiple times (4+ duplicates of "Todo List [11 items]")
+  - Table rows spread across entire terminal with huge vertical gaps
+  - The `/` operator is designed for full-screen layouts with padding, NOT for simple vertical concatenation
+- **Root cause:** Term.jl `/` operator pads each element to terminal dimensions and creates a layout grid, which doesn't match our immediate-mode rendering approach
+- **Resolution:** Reverted all changes back to `join(lines, "\n")` pattern
+- All tests still pass after revert (967/967)
+- **Recommendation:** Skip Unit 4 - the `/` operator is not suitable for this use case. The existing `join(lines, "\n")` pattern works correctly.
+- Branch changes discarded
+
 ---
 
 ## Issues & Fixes
 
 Track issues found during verification:
 
-*(No issues logged yet)*
+### Issue #1: Term.jl `/` operator unsuitable for screen composition
+**Unit:** 4
+**Discovered:** 2026-01-20
+**Severity:** Blocker
+
+**Problem:** The Term.jl `/` operator causes:
+1. Repeated headers (content duplicated 4+ times)
+2. Excessive vertical spacing (rows spread across entire terminal)
+
+**Root Cause:** The `/` operator is designed for full-screen layout composition where each element is padded to terminal dimensions. It creates a layout grid, not simple vertical concatenation.
+
+**Resolution:** Keep existing `join(lines, "\n")` pattern. Skip Unit 4 entirely - the feature doesn't provide value for this use case.
+
+**Impact:** Units 4 and 5 should be marked as SKIPPED. Unit 6 (Panel styling) can proceed independently.
 
 ---
 
