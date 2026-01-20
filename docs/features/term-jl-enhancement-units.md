@@ -4,7 +4,7 @@
 **Feature Spec:** docs/features/term-jl-enhancement.md
 **Plan:** plans/term-jl-enhancement.md
 **Created:** 2026-01-18
-**Status:** In Progress (2/6 units merged)
+**Status:** In Progress (3/6 units merged)
 
 ---
 
@@ -23,7 +23,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 |------|------|--------|--------|-----|
 | 1 | Category Table with Term.jl | MERGED | refactor/term-jl-category-table | #15 |
 | 2 | Project Table with Term.jl | MERGED | refactor/term-jl-project-table | #16 |
-| 3 | Todo Table with Term.jl | VERIFIED | refactor/term-jl-todo-table | - |
+| 3 | Todo Table with Term.jl | MERGED | refactor/term-jl-todo-table | #17 |
 | 4 | Layout Operators for List Screens | PENDING | - | - |
 | 5 | Layout Operators for Detail/Filter Screens | PENDING | - | - |
 | 6 | Enhanced Panel Styling | PENDING | - | - |
@@ -103,7 +103,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 3: Todo Table with Term.jl
 
-**Status:** VERIFIED
+**Status:** MERGED (PR #17)
 **Branch:** `refactor/term-jl-todo-table`
 **Plan Steps:** 7, 8, 9
 **Depends On:** Unit 1, Unit 2
