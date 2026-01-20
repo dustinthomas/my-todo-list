@@ -53,14 +53,30 @@ db = connect_database(":memory:")
 ```
 
 # Important
-Foreign key constraints are automatically enabled via `PRAGMA foreign_keys = ON`.
-This must be done for every connection as it's not persistent.
+The following PRAGMA settings are applied for every connection:
+- `foreign_keys = ON`: Enables foreign key constraint enforcement (not persistent)
+- `busy_timeout = 5000`: Waits up to 5 seconds for locks before failing (helps with Docker)
+- `journal_mode = WAL`: Enables Write-Ahead Logging for better concurrency (file DBs only)
 """
 function connect_database(db_path::String = get_database_path())::SQLite.DB
     db = SQLite.DB(db_path)
     # CRITICAL: Enable foreign key constraints
     # This is not persistent and must be done for each connection
     DBInterface.execute(db, "PRAGMA foreign_keys = ON")
+
+    # Set busy timeout to wait for locks instead of failing immediately
+    # This helps with concurrent access and Docker bind mount issues
+    # 5000ms (5 seconds) gives enough time for locks to be released
+    DBInterface.execute(db, "PRAGMA busy_timeout = 5000")
+
+    # Enable WAL (Write-Ahead Logging) mode for better concurrency
+    # WAL allows readers and writers to operate simultaneously
+    # This is especially helpful in Docker environments with bind mounts
+    # Note: Only set for file-based databases, not :memory:
+    if db_path != ":memory:"
+        DBInterface.execute(db, "PRAGMA journal_mode = WAL")
+    end
+
     return db
 end
 

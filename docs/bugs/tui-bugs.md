@@ -13,7 +13,7 @@
 | BUG-001 | Text input not populating in form fields | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
-| BUG-004 | Database locked error on save | HIGH | OPEN | - |
+| BUG-004 | Database locked error on save | HIGH | FIXED | bugfix/tui-db-locked |
 | BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
 
@@ -201,8 +201,10 @@ Added tests for:
 ## BUG-004: Database locked error on save
 
 **Priority:** HIGH
-**Status:** OPEN
+**Status:** FIXED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-20
+**Branch:** bugfix/tui-db-locked
 
 ### Description
 When saving a todo, an error appears: `SQLite.SQLiteException("database is locked")`
@@ -219,11 +221,22 @@ This suggests the database connection is not being managed correctly - possibly 
 4. Error appears: "Error saving todo: SQLite.SQLiteException("database is locked")"
 
 ### Root Cause Analysis
-Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
-1. Database connection opened multiple times without closing
-2. Transaction started but not committed before next operation
-3. Multiple threads/processes accessing same database file
-4. Connection not being reused properly across operations
+The issue is caused by SQLite's default locking behavior combined with Docker bind mount limitations:
+
+1. **Default busy_timeout = 0**: SQLite's default busy timeout is 0ms, meaning it immediately fails if the database is locked instead of waiting.
+
+2. **Docker bind mount locking**: When the database file is on a bind mount (Windows host to Linux container), file locking may not work reliably. Even small timing windows between operations can trigger lock errors.
+
+3. **Journal mode**: The default "delete" journal mode is more prone to locking conflicts compared to WAL (Write-Ahead Logging) mode.
+
+### Fix Applied
+Updated `connect_database()` in `src/database.jl` to set two SQLite PRAGMA settings that improve locking behavior:
+
+1. **`PRAGMA busy_timeout = 5000`**: Tells SQLite to wait up to 5 seconds for locks to be released before returning an error. This handles timing issues where rapid operations briefly overlap.
+
+2. **`PRAGMA journal_mode = WAL`**: Enables Write-Ahead Logging mode which allows simultaneous readers and writers. WAL mode is more resilient to the file locking issues seen with Docker bind mounts. Note: Only applied to file-based databases, not `:memory:` databases.
+
+These settings are applied for every new connection in `connect_database()`.
 
 ---
 
@@ -360,10 +373,9 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
    - Branch: `bugfix/tui-table-alignment`
    - Fix: Added `visible_length()` and `styled_rpad()` helpers
 
-3. **BUG-004** (database locked) - HIGH PRIORITY
+3. ~~**BUG-004** (database locked)~~ ✅ FIXED
    - Branch: `bugfix/tui-db-locked`
-   - Fix: Investigate connection management in `src/tui/screens/todo_form.jl`
-   - This prevents saving todos
+   - Fix: Added `busy_timeout` and WAL mode PRAGMA settings in `src/database.jl`
 
 4. **BUG-005 + BUG-006** (related navigation issues - fix together)
    - Branch: `bugfix/tui-form-navigation`
@@ -397,3 +409,4 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 | 2026-01-20 | BUG-005/006 FIXED | Clarified navigation: Tab for fields, arrows for radio options only. Stop at boundary. All tests pass (960/960). |
 | 2026-01-20 | BUG-005/006 VERIFIED | Manual testing confirms navigation behavior works correctly. |
 | 2026-01-20 | BUG-005/006 MERGED | PR #13 merged to main. |
+| 2026-01-20 | BUG-004 FIXED | Added PRAGMA busy_timeout=5000 and journal_mode=WAL in connect_database(). All tests pass (960/960). |
