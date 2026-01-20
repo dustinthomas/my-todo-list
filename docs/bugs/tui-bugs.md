@@ -14,8 +14,8 @@
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
-| BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | OPEN | - |
-| BUG-006 | Error navigating past last submenu item | HIGH | OPEN | - |
+| BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | FIXED | bugfix/tui-form-navigation |
+| BUG-006 | Error navigating past last submenu item | HIGH | FIXED | bugfix/tui-form-navigation |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -230,8 +230,10 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 ## BUG-005: Form navigation enters submenu instead of next field
 
 **Priority:** MEDIUM
-**Status:** OPEN
+**Status:** FIXED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-20
+**Branch:** bugfix/tui-form-navigation
 
 ### Description
 When navigating the "Add New Todo" form using the down arrow key, pressing down on the Status field incorrectly enters the Status submenu (showing pending/in_progress/completed/blocked options) instead of moving to the next form field (Priority).
@@ -270,13 +272,27 @@ Likely in `src/tui/screens/todo_form.jl` or `src/tui/input.jl`. The form navigat
 
 The down arrow should only trigger field navigation, not submenu entry.
 
+### Fix Applied
+Clarified the separation between field navigation and option cycling in `src/tui/screens/todo_form.jl`:
+
+1. **Tab/Shift+Tab**: Navigate between form fields (only way to move between fields)
+2. **Arrow keys (↑/↓)**: Cycle through options on radio fields only (do nothing on text fields)
+3. **Stop at boundary**: When at first/last option in a radio field, arrow keys stop instead of wrapping
+
+Changes made:
+- Removed arrow key field navigation from text fields (lines 388-396)
+- Changed `handle_radio_navigation!()` to stop at boundaries instead of wrapping (lines 459-470)
+- Updated `TODO_FORM_SHORTCUTS` to accurately reflect key bindings (lines 20-27)
+
 ---
 
 ## BUG-006: Error navigating past last submenu item
 
 **Priority:** HIGH
-**Status:** OPEN
+**Status:** FIXED
 **Discovered:** 2026-01-18 during manual testing
+**Fixed:** 2026-01-20
+**Branch:** bugfix/tui-form-navigation
 
 ### Description
 When inside the Status submenu (due to BUG-005), navigating to the last item ("blocked") and pressing down arrow throws a `MethodError`.
@@ -316,6 +332,15 @@ Possible fixes:
 1. Add boundary check to prevent navigation past last item
 2. Handle `nothing` return value gracefully in calling code
 3. Implement wrap-around behavior
+
+### Fix Applied
+Fixed by implementing Option 1 (boundary check) in `handle_radio_navigation!()`:
+
+The function now checks if at first/last option before attempting to navigate:
+- Down arrow at last option: Do nothing (stay on last item)
+- Up arrow at first option: Do nothing (stay on first item)
+
+This prevents the `Nothing` return that was causing the `MethodError`. The fix is shared with BUG-005 since both issues stem from the same navigation code.
 
 ---
 
@@ -365,3 +390,4 @@ Possible fixes:
 | 2026-01-18 | BUG-003 MERGED | PR #12 merged to main. |
 | 2026-01-18 | BUG-005 documented | Form navigation enters Status submenu instead of moving to next field. |
 | 2026-01-18 | BUG-006 documented | MethodError crash when navigating past last submenu item. Related to BUG-005. |
+| 2026-01-20 | BUG-005/006 FIXED | Clarified navigation: Tab for fields, arrows for radio options only. Stop at boundary. All tests pass (960/960). |

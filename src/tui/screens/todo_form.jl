@@ -20,7 +20,8 @@ const TODO_FORM_SAVE_INDEX = 7
 const TODO_FORM_SHORTCUTS = [
     ("Tab", "Next Field"),
     ("Shift+Tab", "Prev Field"),
-    ("↑/↓", "Select Option"),
+    ("↑/↓", "Cycle Option"),
+    ("1-4", "Quick Select"),
     ("Enter", "Save"),
     ("Esc", "Cancel")
 ]
@@ -385,19 +386,13 @@ function handle_todo_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Arrow key handling depends on field type
+    # Arrow key handling - only for cycling radio options
     if key == KEY_DOWN || key == KEY_UP
         if is_radio_field(idx)
-            # Cycle through radio options
+            # Cycle through radio options (with boundary stop per design decision)
             handle_radio_navigation!(state, idx, key)
-        else
-            # Navigate between fields
-            if key == KEY_DOWN && idx < TODO_FORM_SAVE_INDEX
-                state.form_field_index += 1
-            elseif key == KEY_UP && idx > 1
-                state.form_field_index -= 1
-            end
         end
+        # Arrow keys do nothing on text fields - use Tab to navigate
         return nothing
     end
 
@@ -462,14 +457,18 @@ function handle_radio_navigation!(state::AppState, idx::Int, key)::Nothing
         current_idx = 1
     end
 
-    # Move up or down
+    # Move up or down (stop at boundary - don't wrap)
     if key == KEY_DOWN
-        new_idx = current_idx < length(options) ? current_idx + 1 : 1
+        if current_idx < length(options)
+            state.form_fields[field_sym] = options[current_idx + 1]
+        end
+        # At last option - do nothing (stop at boundary)
     else  # KEY_UP
-        new_idx = current_idx > 1 ? current_idx - 1 : length(options)
+        if current_idx > 1
+            state.form_fields[field_sym] = options[current_idx - 1]
+        end
+        # At first option - do nothing (stop at boundary)
     end
-
-    state.form_fields[field_sym] = options[new_idx]
     return nothing
 end
 
