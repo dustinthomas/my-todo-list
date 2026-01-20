@@ -13,8 +13,14 @@ WORKDIR /app
 COPY Project.toml Manifest.toml* ./
 
 # Instantiate packages (cached until Project.toml changes)
-# Note: Pkg.precompile() will be added in Phase 3 when source files exist
 RUN julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
+# Copy entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use entrypoint to sync packages when Manifest.toml changes (handles machine switches)
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Keep container running for interactive use
 CMD ["tail", "-f", "/dev/null"]

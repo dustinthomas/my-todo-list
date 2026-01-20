@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Manually sync Julia packages in the Docker container
+# Use this after pulling code with new dependencies, or if auto-sync didn't trigger
+set -e
+
+echo "Syncing Julia packages..."
+docker-compose exec backend julia --project=/app -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+# Update the checksum so auto-sync doesn't re-run
+docker-compose exec backend bash -c 'md5sum /app/Manifest.toml | cut -d" " -f1 > /root/.julia/.manifest_checksum'
+
+echo "Package sync complete."
