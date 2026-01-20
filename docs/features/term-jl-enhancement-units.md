@@ -4,7 +4,7 @@
 **Feature Spec:** docs/features/term-jl-enhancement.md
 **Plan:** plans/term-jl-enhancement.md
 **Created:** 2026-01-18
-**Status:** Not Started
+**Status:** In Progress (1/6 units merged)
 
 ---
 
@@ -21,7 +21,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 | Unit | Name | Status | Branch | PR |
 |------|------|--------|--------|-----|
-| 1 | Category Table with Term.jl | VERIFIED | refactor/term-jl-category-table | - |
+| 1 | Category Table with Term.jl | MERGED | refactor/term-jl-category-table | #15 |
 | 2 | Project Table with Term.jl | PENDING | - | - |
 | 3 | Todo Table with Term.jl | PENDING | - | - |
 | 4 | Layout Operators for List Screens | PENDING | - | - |
@@ -43,7 +43,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 1: Category Table with Term.jl
 
-**Status:** VERIFIED
+**Status:** MERGED (PR #15)
 **Branch:** `refactor/term-jl-category-table`
 **Plan Steps:** 1, 2, 3, 4
 **Depends On:** None
