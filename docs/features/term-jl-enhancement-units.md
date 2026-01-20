@@ -1,0 +1,313 @@
+# Work Units: Term.jl Enhancement
+
+**Feature:** Refactor TUI to better utilize Term.jl features
+**Feature Spec:** docs/features/term-jl-enhancement.md
+**Plan:** plans/term-jl-enhancement.md
+**Created:** 2026-01-18
+**Status:** Not Started
+
+---
+
+## Overview
+
+This file tracks testable work units for the Term.jl enhancement refactoring. Each unit is:
+- **Self-contained:** Can be implemented, tested, and merged independently
+- **PR-sized:** Results in one pull request
+- **Testable:** Has clear acceptance criteria that can be verified
+
+---
+
+## Progress Summary
+
+| Unit | Name | Status | Branch | PR |
+|------|------|--------|--------|-----|
+| 1 | Category Table with Term.jl | PENDING | - | - |
+| 2 | Project Table with Term.jl | PENDING | - | - |
+| 3 | Todo Table with Term.jl | PENDING | - | - |
+| 4 | Layout Operators for List Screens | PENDING | - | - |
+| 5 | Layout Operators for Detail/Filter Screens | PENDING | - | - |
+| 6 | Enhanced Panel Styling | PENDING | - | - |
+
+**Status Legend:**
+- `PENDING` - Not started
+- `IN_PROGRESS` - Implementer working on it
+- `IMPLEMENTED` - Code complete, ready for verification
+- `VERIFIED` - Tester approved
+- `MERGED` - PR merged to main
+- `BLOCKED` - Waiting on dependency
+- `FAILED` - Verification failed, needs fixes
+
+---
+
+## Work Units
+
+### Unit 1: Category Table with Term.jl
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-category-table`
+**Plan Steps:** 1, 2, 3, 4
+**Depends On:** None
+
+**Scope:**
+- Spike Term.jl Table API to understand capabilities
+- Replace manual `render_category_table()` with Term.jl Table
+- Integrate into category list screen
+- Clean up old implementation
+
+**Acceptance Criteria:**
+- [ ] Category table renders using `Term.Tables.Table`
+- [ ] Selection indicator (►) visible on selected row
+- [ ] Columns: #, Name, Todos, Color all display correctly
+- [ ] Empty state message still works ("No categories found")
+- [ ] All category list tests in `test_tui_screens.jl` pass
+- [ ] Manual visual verification: table looks good in terminal
+- [ ] No regressions in other screens
+
+**Estimated Files:** 2 files, ~100 lines changed
+
+**Notes:**
+- This is the simplest table (3 data columns + selector)
+- Start here to validate the Term.jl Table approach
+- If this doesn't work well, reconsider the approach before continuing
+
+---
+
+### Unit 2: Project Table with Term.jl
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-project-table`
+**Plan Steps:** 5, 6
+**Depends On:** Unit 1
+
+**Scope:**
+- Apply same Term.jl Table pattern to project table
+- Slightly more complex: 4 columns (Name, Description, Todos, Color)
+
+**Acceptance Criteria:**
+- [ ] Project table renders using `Term.Tables.Table`
+- [ ] Selection indicator visible on selected row
+- [ ] Columns: #, Name, Description, Todos, Color all display correctly
+- [ ] Description truncation works for long text
+- [ ] Empty state message works ("No projects found")
+- [ ] All project list tests pass
+- [ ] Manual visual verification
+- [ ] No regressions
+
+**Estimated Files:** 2 files, ~80 lines changed
+
+**Notes:**
+- Pattern should be established from Unit 1
+- Main difference is extra column and description truncation
+
+---
+
+### Unit 3: Todo Table with Term.jl
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-todo-table`
+**Plan Steps:** 7, 8, 9
+**Depends On:** Unit 1, Unit 2
+
+**Scope:**
+- Apply Term.jl Table to the most complex table (todos)
+- Handle scrolling (visible rows only)
+- Handle 5 columns with styled content (status, priority)
+
+**Acceptance Criteria:**
+- [ ] Todo table renders using `Term.Tables.Table`
+- [ ] Selection indicator visible on selected row
+- [ ] Columns: #, Title, Status, Priority, Due Date all display
+- [ ] Status column has correct colors (yellow/blue/green/red)
+- [ ] Priority column has correct colors (red/yellow/dim)
+- [ ] Scrolling works: only visible rows shown
+- [ ] Scroll indicator shows "Showing X-Y of Z" when needed
+- [ ] Empty state message works ("No todos found")
+- [ ] All main list tests pass
+- [ ] Manual testing: scroll up/down with j/k keys
+- [ ] No regressions
+
+**Estimated Files:** 2 files, ~150 lines changed
+
+**Notes:**
+- Most complex table - validates approach fully
+- Scrolling requires slicing data before building Table
+- Styled content (status, priority) must render correctly in Table cells
+
+---
+
+### Unit 4: Layout Operators for List Screens
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-layout-lists`
+**Plan Steps:** 10, 11, 12, 13
+**Depends On:** Unit 1, Unit 2, Unit 3
+
+**Scope:**
+- Spike layout operators (`/` for vertical stacking)
+- Refactor category_list, project_list, main_list screens
+- Replace `join(lines, "\n")` with Term.jl `/` operator
+
+**Acceptance Criteria:**
+- [ ] Category list uses `/` operator for composition
+- [ ] Project list uses `/` operator for composition
+- [ ] Main list uses `/` operator for composition
+- [ ] Optional message component handled correctly (included when present)
+- [ ] All list screen tests pass
+- [ ] Manual visual verification: screens look identical or better
+- [ ] No regressions
+
+**Estimated Files:** 3 files, ~60 lines changed
+
+**Notes:**
+- Step 10 spikes the API first
+- If `/` operator doesn't work well, can skip this unit
+- Main benefit: cleaner code, not visual change
+
+---
+
+### Unit 5: Layout Operators for Detail/Filter Screens
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-layout-detail`
+**Plan Steps:** 14, 15
+**Depends On:** Unit 4
+
+**Scope:**
+- Apply `/` operator to todo_detail screen
+- Apply `/` operator to filter screens (menu, status, project, category)
+
+**Acceptance Criteria:**
+- [ ] Todo detail screen uses `/` operator
+- [ ] Filter menu uses `/` operator
+- [ ] Filter status/project/category screens use `/` operator
+- [ ] All detail and filter tests pass
+- [ ] Manual visual verification
+- [ ] No regressions
+
+**Estimated Files:** 5 files, ~80 lines changed
+
+**Notes:**
+- Straightforward application of pattern from Unit 4
+- Filter screens are simple menus
+
+---
+
+### Unit 6: Enhanced Panel Styling
+
+**Status:** PENDING
+**Branch:** `refactor/term-jl-panels`
+**Plan Steps:** 16, 17, 18
+**Depends On:** Unit 4, Unit 5
+
+**Scope:**
+- Enhance header panel with box style, title, subtitle
+- Enhance form panels with heavier box style
+- Final cleanup and documentation
+
+**Acceptance Criteria:**
+- [ ] Header uses `box=:ROUNDED` for visual distinction
+- [ ] Header title and subtitle use Panel parameters (not content)
+- [ ] Form screens use `box=:HEAVY` for input areas
+- [ ] All tests pass
+- [ ] Manual visual verification: improved appearance
+- [ ] No dead code remaining in table.jl
+- [ ] CLAUDE.md updated with any new Term.jl patterns learned
+- [ ] No regressions
+
+**Estimated Files:** 5 files, ~100 lines changed
+
+**Notes:**
+- Visual polish unit
+- Can be skipped if earlier units reveal issues
+- Final cleanup of any technical debt from refactoring
+
+---
+
+## Session Log
+
+Track work sessions for handoff context:
+
+*(No sessions logged yet)*
+
+---
+
+## Issues & Fixes
+
+Track issues found during verification:
+
+*(No issues logged yet)*
+
+---
+
+## Completion Checklist
+
+Before marking feature complete:
+
+- [ ] All units have status MERGED
+- [ ] Full test suite passes
+- [ ] Manual verification complete for all TUI screens
+- [ ] Documentation updated (CLAUDE.md if needed)
+- [ ] No increase in code complexity
+
+---
+
+## Manual Testing Checklist
+
+After each unit, run through this checklist:
+
+### Category List Screen
+- [ ] Opens from main list (press 'g')
+- [ ] Table displays with selection indicator
+- [ ] Navigate up/down with j/k
+- [ ] Add category works (press 'a')
+- [ ] Edit category works (press 'e')
+- [ ] Delete shows confirmation (press 'd')
+- [ ] Back returns to main list (press 'b')
+
+### Project List Screen
+- [ ] Opens from main list (press 'p')
+- [ ] Table displays with selection indicator
+- [ ] Description truncates if long
+- [ ] Todo counts display correctly
+- [ ] All navigation works
+
+### Main List Screen
+- [ ] Table displays with todos
+- [ ] Status colors correct (yellow/blue/green/red)
+- [ ] Priority colors correct (red/yellow/dim)
+- [ ] Scrolling works with many todos
+- [ ] Scroll indicator shows when needed
+- [ ] Empty state shows when no todos
+
+### Todo Detail Screen
+- [ ] Opens on Enter from main list
+- [ ] All fields display
+- [ ] Back navigation works
+
+### Filter Screens
+- [ ] Filter menu opens (press 'f')
+- [ ] Status filter works
+- [ ] Project filter works
+- [ ] Category filter works
+- [ ] Clear all filters works
+
+### Form Screens
+- [ ] Add/Edit todo forms work
+- [ ] Add/Edit project forms work
+- [ ] Add/Edit category forms work
+- [ ] Validation errors display
+
+---
+
+**Workflow Reminder:**
+
+```
+For each unit:
+1. CLEAR CONTEXT
+2. /implement-step docs/features/term-jl-enhancement-units.md 1
+3. CLEAR CONTEXT
+4. /verify-feature docs/features/term-jl-enhancement-units.md 1
+5. If PASS: /commit-push-pr
+6. If FAIL: Back to step 1
+7. After PR merged: Update status to MERGED, repeat for next unit
+```
