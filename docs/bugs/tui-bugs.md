@@ -14,8 +14,8 @@
 | BUG-002 | Keys require Enter to respond | HIGH | MERGED (PR #11) | bugfix/tui-raw-terminal |
 | BUG-003 | Table column misalignment | MEDIUM | MERGED (PR #12) | bugfix/tui-table-alignment |
 | BUG-004 | Database locked error on save | HIGH | OPEN | - |
-| BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | FIXED | bugfix/tui-form-navigation |
-| BUG-006 | Error navigating past last submenu item | HIGH | FIXED | bugfix/tui-form-navigation |
+| BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | MERGED (PR #13) | bugfix/tui-form-navigation |
+| BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -230,9 +230,11 @@ Likely in `src/tui/screens/todo_form.jl` or `src/queries.jl`. Possible causes:
 ## BUG-005: Form navigation enters submenu instead of next field
 
 **Priority:** MEDIUM
-**Status:** FIXED
+**Status:** MERGED (PR #13)
 **Discovered:** 2026-01-18 during manual testing
 **Fixed:** 2026-01-20
+**Verified:** 2026-01-20
+**Merged:** 2026-01-20
 **Branch:** bugfix/tui-form-navigation
 
 ### Description
@@ -289,9 +291,11 @@ Changes made:
 ## BUG-006: Error navigating past last submenu item
 
 **Priority:** HIGH
-**Status:** FIXED
+**Status:** MERGED (PR #13)
 **Discovered:** 2026-01-18 during manual testing
 **Fixed:** 2026-01-20
+**Verified:** 2026-01-20
+**Merged:** 2026-01-20
 **Branch:** bugfix/tui-form-navigation
 
 ### Description
@@ -391,3 +395,5 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 | 2026-01-18 | BUG-005 documented | Form navigation enters Status submenu instead of moving to next field. |
 | 2026-01-18 | BUG-006 documented | MethodError crash when navigating past last submenu item. Related to BUG-005. |
 | 2026-01-20 | BUG-005/006 FIXED | Clarified navigation: Tab for fields, arrows for radio options only. Stop at boundary. All tests pass (960/960). |
+| 2026-01-20 | BUG-005/006 VERIFIED | Manual testing confirms navigation behavior works correctly. |
+| 2026-01-20 | BUG-005/006 MERGED | PR #13 merged to main. |
