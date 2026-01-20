@@ -21,7 +21,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 | Unit | Name | Status | Branch | PR |
 |------|------|--------|--------|-----|
-| 1 | Category Table with Term.jl | PENDING | - | - |
+| 1 | Category Table with Term.jl | VERIFIED | refactor/term-jl-category-table | - |
 | 2 | Project Table with Term.jl | PENDING | - | - |
 | 3 | Todo Table with Term.jl | PENDING | - | - |
 | 4 | Layout Operators for List Screens | PENDING | - | - |
@@ -43,7 +43,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 1: Category Table with Term.jl
 
-**Status:** PENDING
+**Status:** VERIFIED
 **Branch:** `refactor/term-jl-category-table`
 **Plan Steps:** 1, 2, 3, 4
 **Depends On:** None
@@ -55,13 +55,13 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 - Clean up old implementation
 
 **Acceptance Criteria:**
-- [ ] Category table renders using `Term.Tables.Table`
-- [ ] Selection indicator (►) visible on selected row
-- [ ] Columns: #, Name, Todos, Color all display correctly
-- [ ] Empty state message still works ("No categories found")
-- [ ] All category list tests in `test_tui_screens.jl` pass
-- [ ] Manual visual verification: table looks good in terminal
-- [ ] No regressions in other screens
+- [x] Category table renders using `Term.Tables.Table`
+- [x] Selection indicator (►) visible on selected row
+- [x] Columns: #, Name, Todos, Color all display correctly
+- [x] Empty state message still works ("No categories found")
+- [x] All category list tests in `test_tui_screens.jl` pass
+- [x] Manual visual verification: table looks good in terminal
+- [x] No regressions in other screens
 
 **Estimated Files:** 2 files, ~100 lines changed
 
@@ -227,7 +227,41 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 Track work sessions for handoff context:
 
-*(No sessions logged yet)*
+### 2026-01-20 - Implementer: Unit 1
+**Session:** Implementer
+**Result:** Complete
+**Notes:**
+- Spiked Term.jl Table API to understand capabilities
+- Created render_category_table() using Term.jl Tables.Table with:
+  - Fixed column widths for consistency
+  - box=:SIMPLE style for cleaner appearance
+  - Selection indicator (►) with cyan bold styling
+  - Support for styled content in cells
+- Integrated into category_list.jl
+- Removed old manual table implementation
+- All 960 tests pass (170 TodoList + 790 TUI)
+- Files modified:
+  - src/tui/components/table.jl (~40 lines changed, net reduction)
+  - src/tui/screens/category_list.jl (1 line comment update)
+  - src/TodoList.jl (import updated)
+- Branch: refactor/term-jl-category-table
+- Ready for verification
+
+### 2026-01-20 - Tester: Unit 1
+**Session:** Tester
+**Result:** PASS
+**Notes:**
+- All 960 tests pass (170 TodoList + 790 TUI)
+- Acceptance criteria verification:
+  - ✓ Category table renders using Term.Tables.Table
+  - ✓ Selection indicator (►) visible on selected row (cyan bold)
+  - ✓ Columns #, Name, Todos, Color all display correctly
+  - ✓ Empty state message works ("No categories found")
+  - ✓ All category list tests pass
+  - ✓ Manual visual verification: table looks clean with :SIMPLE box style
+  - ✓ No regressions in other screens
+- Explored alternative box styles (:ROUNDED, :SQUARE, :HEAVY) - decided to keep :SIMPLE for minimal appearance
+- Unit ready for shipping
 
 ---
 

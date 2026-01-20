@@ -5,6 +5,7 @@ Renders data tables for todos, projects, and categories.
 """
 
 using Term: Panel, @style
+using Term.Tables: Table
 
 # =============================================================================
 # String Formatting Helpers
@@ -283,7 +284,9 @@ end
 """
     render_category_table(categories::Vector{Category}, selected_index::Int, todo_counts::Dict)::String
 
-Render a table of categories with selection indicator.
+Render a table of categories with selection indicator using Term.jl Table.
+
+Uses Term.jl's built-in Table component for cleaner rendering and automatic styling.
 
 # Arguments
 - `categories::Vector{Category}`: List of categories to display
@@ -298,28 +301,37 @@ function render_category_table(categories::Vector{Category}, selected_index::Int
         return "{dim}No categories found. Press 'a' to add a new category.{/dim}"
     end
 
-    lines = String[]
-
-    # Header row
-    push!(lines, "{bold}   # │ Name                           │ Todos │ Color  {/bold}")
-    push!(lines, "─────┼────────────────────────────────┼───────┼────────")
+    # Build data matrix for Term.jl Table
+    # Columns: selector+ID, Name, Todos, Color
+    nrows = length(categories)
+    data = Matrix{String}(undef, nrows, 4)
 
     for (i, category) in enumerate(categories)
-        # Selection indicator
+        # Selection indicator + ID in first column
         selector = i == selected_index ? "{cyan bold}►{/cyan bold}" : " "
-
-        # Format fields
         id_str = lpad(string(category.id), 3)
-        name = truncate_string(category.name, 30)
-        name_padded = rpad(name, 30)
-        count = get(todo_counts, category.id, 0)
-        count_str = lpad(string(count), 5)
-        color = category.color !== nothing ? category.color : "{dim}—{/dim}"
+        data[i, 1] = "$selector $id_str"
 
-        # Build row
-        row = "$selector $id_str │ $name_padded │ $count_str │ $color"
-        push!(lines, row)
+        # Name (truncated if needed)
+        data[i, 2] = truncate_string(category.name, 30)
+
+        # Todo count
+        count = get(todo_counts, category.id, 0)
+        data[i, 3] = lpad(string(count), 5)
+
+        # Color (or placeholder)
+        data[i, 4] = category.color !== nothing ? category.color : "{dim}—{/dim}"
     end
 
-    return join(lines, "\n")
+    # Create Term.jl Table with fixed column widths for consistency
+    # Note: First column needs extra width to account for Term.jl style tags
+    # that don't display but take character space in the string
+    tbl = Table(
+        data,
+        header=["#", "Name", "Todos", "Color"],
+        columns_widths=[8, 32, 7, 10],
+        box=:SIMPLE
+    )
+
+    return string(tbl)
 end
