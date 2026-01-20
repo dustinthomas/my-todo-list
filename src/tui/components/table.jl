@@ -234,7 +234,9 @@ end
 """
     render_project_table(projects::Vector{Project}, selected_index::Int, todo_counts::Dict)::String
 
-Render a table of projects with selection indicator.
+Render a table of projects with selection indicator using Term.jl Table.
+
+Uses Term.jl's built-in Table component for cleaner rendering and automatic styling.
 
 # Arguments
 - `projects::Vector{Project}`: List of projects to display
@@ -249,32 +251,41 @@ function render_project_table(projects::Vector{Project}, selected_index::Int, to
         return "{dim}No projects found. Press 'a' to add a new project.{/dim}"
     end
 
-    lines = String[]
-
-    # Header row
-    push!(lines, "{bold}   # │ Name                 │ Description              │ Todos │ Color  {/bold}")
-    push!(lines, "─────┼──────────────────────┼──────────────────────────┼───────┼────────")
+    # Build data matrix for Term.jl Table
+    # Columns: selector+ID, Name, Description, Todos, Color
+    nrows = length(projects)
+    data = Matrix{String}(undef, nrows, 5)
 
     for (i, project) in enumerate(projects)
-        # Selection indicator
+        # Selection indicator + ID in first column
         selector = i == selected_index ? "{cyan bold}►{/cyan bold}" : " "
-
-        # Format fields
         id_str = lpad(string(project.id), 3)
-        name = truncate_string(project.name, 20)
-        name_padded = rpad(name, 20)
-        desc = project.description !== nothing ? truncate_string(project.description, 24) : ""
-        desc_padded = rpad(desc, 24)
-        count = get(todo_counts, project.id, 0)
-        count_str = lpad(string(count), 5)
-        color = project.color !== nothing ? project.color : "{dim}—{/dim}"
+        data[i, 1] = "$selector $id_str"
 
-        # Build row
-        row = "$selector $id_str │ $name_padded │ $desc_padded │ $count_str │ $color"
-        push!(lines, row)
+        # Name (truncated if needed)
+        data[i, 2] = truncate_string(project.name, 20)
+
+        # Description (truncated if needed)
+        data[i, 3] = project.description !== nothing ? truncate_string(project.description, 24) : ""
+
+        # Todo count
+        count = get(todo_counts, project.id, 0)
+        data[i, 4] = lpad(string(count), 5)
+
+        # Color (or placeholder)
+        data[i, 5] = project.color !== nothing ? project.color : "{dim}—{/dim}"
     end
 
-    return join(lines, "\n")
+    # Create Term.jl Table with fixed column widths for consistency
+    # Note: First column needs extra width to account for Term.jl style tags
+    tbl = Table(
+        data,
+        header=["#", "Name", "Description", "Todos", "Color"],
+        columns_widths=[8, 22, 26, 7, 10],
+        box=:SIMPLE
+    )
+
+    return string(tbl)
 end
 
 # =============================================================================

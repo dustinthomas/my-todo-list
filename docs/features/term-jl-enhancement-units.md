@@ -22,7 +22,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 | Unit | Name | Status | Branch | PR |
 |------|------|--------|--------|-----|
 | 1 | Category Table with Term.jl | MERGED | refactor/term-jl-category-table | #15 |
-| 2 | Project Table with Term.jl | PENDING | - | - |
+| 2 | Project Table with Term.jl | VERIFIED | refactor/term-jl-project-table | - |
 | 3 | Todo Table with Term.jl | PENDING | - | - |
 | 4 | Layout Operators for List Screens | PENDING | - | - |
 | 5 | Layout Operators for Detail/Filter Screens | PENDING | - | - |
@@ -74,7 +74,7 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 
 ### Unit 2: Project Table with Term.jl
 
-**Status:** PENDING
+**Status:** VERIFIED
 **Branch:** `refactor/term-jl-project-table`
 **Plan Steps:** 5, 6
 **Depends On:** Unit 1
@@ -84,14 +84,14 @@ This file tracks testable work units for the Term.jl enhancement refactoring. Ea
 - Slightly more complex: 4 columns (Name, Description, Todos, Color)
 
 **Acceptance Criteria:**
-- [ ] Project table renders using `Term.Tables.Table`
-- [ ] Selection indicator visible on selected row
-- [ ] Columns: #, Name, Description, Todos, Color all display correctly
-- [ ] Description truncation works for long text
-- [ ] Empty state message works ("No projects found")
-- [ ] All project list tests pass
-- [ ] Manual visual verification
-- [ ] No regressions
+- [x] Project table renders using `Term.Tables.Table`
+- [x] Selection indicator visible on selected row
+- [x] Columns: #, Name, Description, Todos, Color all display correctly
+- [x] Description truncation works for long text
+- [x] Empty state message works ("No projects found")
+- [x] All project list tests pass
+- [x] Manual visual verification
+- [x] No regressions
 
 **Estimated Files:** 2 files, ~80 lines changed
 
@@ -261,6 +261,41 @@ Track work sessions for handoff context:
   - ✓ Manual visual verification: table looks clean with :SIMPLE box style
   - ✓ No regressions in other screens
 - Explored alternative box styles (:ROUNDED, :SQUARE, :HEAVY) - decided to keep :SIMPLE for minimal appearance
+- Unit ready for shipping
+
+### 2026-01-20 - Implementer: Unit 2
+**Session:** Implementer
+**Result:** Complete
+**Notes:**
+- Applied same Term.jl Table pattern from Unit 1 to project table
+- Replaced manual ASCII table with Term.jl Tables.Table:
+  - Fixed column widths: [8, 22, 26, 7, 10] for #, Name, Description, Todos, Color
+  - box=:SIMPLE style (consistent with category table)
+  - Selection indicator (►) with cyan bold styling
+  - Support for styled content in cells
+- Description truncation works correctly (ellipsis for long text)
+- All 960 tests pass (170 TodoList + 790 TUI)
+- Files modified:
+  - src/tui/components/table.jl (~35 lines changed in render_project_table)
+- Manual visual verification: table renders cleanly with all columns aligned
+- Ready for verification
+
+### 2026-01-20 - Tester: Unit 2
+**Session:** Tester
+**Result:** PASS
+**Notes:**
+- All 960 tests pass (170 TodoList + 790 TUI)
+- Acceptance criteria verification:
+  - ✓ Project table renders using Term.Tables.Table (lines 281-286 in table.jl)
+  - ✓ Selection indicator (►) visible on selected row (cyan bold styling)
+  - ✓ Columns #, Name, Description, Todos, Color all display correctly
+  - ✓ Description truncation works for long text (24 char max with ellipsis)
+  - ✓ Empty state message works ("No projects found. Press 'a' to add...")
+  - ✓ All project list tests pass (verified in test_tui_screens.jl)
+  - ✓ Manual visual verification: table renders cleanly with :SIMPLE box style
+  - ✓ No regressions in other screens (all 960 tests passing)
+- Nil description renders as empty cell, nil color renders as dimmed dash (—)
+- Pattern consistent with Unit 1 category table
 - Unit ready for shipping
 
 ---
