@@ -4,7 +4,7 @@ Form Components.
 Renders form input elements for todo, project, and category forms.
 """
 
-using Term: @style
+using Term: @style, Panel
 
 # =============================================================================
 # Text Field Component
@@ -420,4 +420,40 @@ function render_category_form_fields(fields::Dict{Symbol,String}, focused_index:
     ))
 
     return join(lines, "\n")
+end
+
+# =============================================================================
+# Form Panel Wrapper
+# =============================================================================
+
+"""
+    render_form_panel(content::String; title::String="", width::Int=80)::Panel
+
+Wrap form content in a Panel with heavy box style for visual weight.
+
+Uses Term.jl Panel with `:HEAVY` box style to create distinct input areas
+for form screens.
+
+# Arguments
+- `content::String`: Form content to wrap (fields, buttons, etc.)
+- `title::String`: Optional panel title (e.g., "Form Fields")
+- `width::Int`: Panel width (default 80)
+
+# Returns
+- `Panel`: Term.jl Panel with heavy box style
+
+# Examples
+```julia
+fields = render_todo_form_fields(...)
+panel = render_form_panel(fields, title="Enter Details")
+```
+"""
+function render_form_panel(content::String; title::String="", width::Int=80)::Panel
+    return Panel(
+        content;
+        title=isempty(title) ? nothing : title,
+        style="white",
+        box=:HEAVY,
+        width=width
+    )
 end

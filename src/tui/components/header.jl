@@ -41,7 +41,6 @@ function render_header(title::String; subtitle::String="")::Panel
 
     return Panel(
         content;
-        title="",
         style="cyan",
         fit=true,
         justify=:center

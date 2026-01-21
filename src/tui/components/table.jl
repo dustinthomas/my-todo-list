@@ -4,70 +4,11 @@ Table Components.
 Renders data tables for todos, projects, and categories.
 """
 
-using Term: Panel, @style
 using Term.Tables: Table
 
 # =============================================================================
 # String Formatting Helpers
 # =============================================================================
-
-"""
-    visible_length(s::String)::Int
-
-Calculate the visible length of a string, excluding Term.jl style tags.
-
-Term.jl uses {style}text{/style} format for styling. This function strips
-those tags to calculate how many characters will actually be displayed.
-
-# Arguments
-- `s::String`: String possibly containing style tags
-
-# Returns
-- `Int`: Number of visible characters
-
-# Examples
-```julia
-visible_length("hello")                    # => 5
-visible_length("{red}hello{/red}")         # => 5
-visible_length("{bold}hi{/bold} there")    # => 8
-```
-"""
-function visible_length(s::String)::Int
-    # Remove Term.jl style tags: {style} and {/style}
-    # Matches {word}, {word word}, {/word}, etc.
-    stripped = replace(s, r"\{/?[a-zA-Z_ ]+\}" => "")
-    return length(stripped)
-end
-
-"""
-    styled_rpad(s::String, width::Int)::String
-
-Right-pad a styled string to a given visible width.
-
-Unlike `rpad`, this function accounts for Term.jl style tags when
-calculating the current string width.
-
-# Arguments
-- `s::String`: String to pad (may contain style tags)
-- `width::Int`: Desired visible width
-
-# Returns
-- `String`: String padded with spaces to reach visible width
-
-# Examples
-```julia
-styled_rpad("{red}hi{/red}", 5)  # => "{red}hi{/red}   " (3 spaces added)
-styled_rpad("hello", 5)          # => "hello" (no padding needed)
-```
-"""
-function styled_rpad(s::String, width::Int)::String
-    current_len = visible_length(s)
-    if current_len >= width
-        return s
-    end
-    padding = " " ^ (width - current_len)
-    return s * padding
-end
 
 """
     truncate_string(s::String, max_len::Int)::String

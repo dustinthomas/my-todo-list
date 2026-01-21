@@ -179,97 +179,19 @@ Refactor TUI components to better utilize Term.jl's built-in features, replacing
 
 ---
 
-### Step 10: Spike Layout Operators
-**Work Unit:** 4
-**Files:** None (exploration only)
+### Steps 10-15: Layout Operators (SKIPPED)
 
-**Changes:**
-- Test `/` operator for vertical stacking in REPL
-- Verify Panel / String / Table compositions work
-- Test that result renders correctly with `tprint`
-- Document approach for screen refactoring
+**Work Units:** 4, 5
+**Status:** SKIPPED
 
-**Tests:**
-- No automated tests - exploratory work
+**Reason:** The Term.jl `/` operator was spiked and found unsuitable for this use case:
+- The `/` operator pads each element to terminal dimensions and creates a layout grid
+- This causes repeated headers (4+ duplicates) and huge vertical gaps between rows
+- It's designed for full-screen layouts, not immediate-mode rendering with simple vertical concatenation
 
----
+**Resolution:** Keep existing `join(lines, "\n")` pattern which works correctly.
 
-### Step 11: Refactor Category List Screen Composition
-**Work Unit:** 4
-**Files to modify:**
-- `src/tui/screens/category_list.jl`
-
-**Changes:**
-- Replace `join(lines, "\n")` with `/` operator
-- Compose: header / message / table / spacer / footer
-- Handle optional message (conditionally include)
-- Update return type if needed
-
-**Tests:**
-- Category list tests pass
-- Manual visual verification
-
----
-
-### Step 12: Refactor Project List Screen Composition
-**Work Unit:** 4
-**Files to modify:**
-- `src/tui/screens/project_list.jl`
-
-**Changes:**
-- Apply same `/` operator pattern
-- Ensure consistency with category list
-
-**Tests:**
-- Project list tests pass
-- Manual visual verification
-
----
-
-### Step 13: Refactor Main List Screen Composition
-**Work Unit:** 4
-**Files to modify:**
-- `src/tui/screens/main_list.jl`
-
-**Changes:**
-- Apply `/` operator pattern
-- Handle filter subtitle in header
-
-**Tests:**
-- Main list tests pass
-- Manual visual verification
-
----
-
-### Step 14: Refactor Todo Detail Screen Composition
-**Work Unit:** 5
-**Files to modify:**
-- `src/tui/screens/todo_detail.jl`
-
-**Changes:**
-- Apply `/` operator for field layout
-- Consider using Panel for field groups
-
-**Tests:**
-- Detail screen tests pass
-- Manual visual verification
-
----
-
-### Step 15: Refactor Filter Screens Composition
-**Work Unit:** 5
-**Files to modify:**
-- `src/tui/screens/filter_menu.jl`
-- `src/tui/screens/filter_status.jl` (if exists)
-- `src/tui/screens/filter_project.jl` (if exists)
-- `src/tui/screens/filter_category.jl` (if exists)
-
-**Changes:**
-- Apply `/` operator pattern to all filter screens
-
-**Tests:**
-- Filter tests pass
-- Manual visual verification
+**Lesson Learned:** Term.jl's layout operators (`/`, `*`) are for full-screen composition where elements fill terminal dimensions. For component-based rendering with variable heights, string concatenation is the appropriate pattern.
 
 ---
 
@@ -326,18 +248,22 @@ Refactor TUI components to better utilize Term.jl's built-in features, replacing
 
 ## Files Summary
 
-**Modified files:**
-- `src/tui/components/table.jl` - Major rewrite
-- `src/tui/components/header.jl` - Panel enhancements
-- `src/tui/screens/category_list.jl` - Layout operators
-- `src/tui/screens/project_list.jl` - Layout operators
-- `src/tui/screens/main_list.jl` - Layout operators
-- `src/tui/screens/todo_detail.jl` - Layout operators
+**Modified files (Units 1-3, COMPLETE):**
+- `src/tui/components/table.jl` - Major rewrite using Term.jl Table
+- `test/test_tui_components.jl` - Test updates for new table format
+
+**Remaining files (Unit 6, PENDING):**
+- `src/tui/components/header.jl` - Panel enhancements (box, title, subtitle)
 - `src/tui/screens/todo_form.jl` - Panel enhancements
 - `src/tui/screens/project_form.jl` - Panel enhancements
 - `src/tui/screens/category_form.jl` - Panel enhancements
-- `src/tui/screens/filter_menu.jl` - Layout operators
-- `test/test_tui_screens.jl` - Test updates
+
+**Descoped files (Units 4-5, SKIPPED):**
+- ~~`src/tui/screens/category_list.jl`~~ - No layout operator changes
+- ~~`src/tui/screens/project_list.jl`~~ - No layout operator changes
+- ~~`src/tui/screens/main_list.jl`~~ - No layout operator changes
+- ~~`src/tui/screens/todo_detail.jl`~~ - No layout operator changes
+- ~~`src/tui/screens/filter_menu.jl`~~ - No layout operator changes
 
 **No new files created.**
 
@@ -359,10 +285,11 @@ Refactor TUI components to better utilize Term.jl's built-in features, replacing
    - Mitigation: Use separate first column for indicator
    - Alternative: Render selected row differently (background color)
 
-4. **Layout operator type compatibility**
+4. **Layout operator type compatibility** ⚠️ MATERIALIZED
    - Risk: `/` may not work with all renderable types
    - Mitigation: Step 10 spikes this before screen refactoring
-   - Fallback: Convert components to strings before composing
+   - **Outcome:** Risk materialized - `/` operator unsuitable for immediate-mode rendering
+   - **Resolution:** Units 4-5 skipped, keep `join(lines, "\n")` pattern
 
 5. **Test failures due to output format changes**
    - Risk: Tests check `contains(output_str, "text")` which may break
@@ -373,13 +300,14 @@ Refactor TUI components to better utilize Term.jl's built-in features, replacing
 
 ## Acceptance Criteria (Overall)
 
-- [ ] All work units complete and merged
+- [x] All three tables use Term.jl Table component (Units 1-3 MERGED)
+- [ ] Enhanced Panel styles applied to headers and forms (Unit 6 PENDING)
 - [ ] Full test suite passes (no regressions)
-- [ ] All three tables use Term.jl Table component
-- [ ] All list screens use `/` operator for composition
-- [ ] Enhanced Panel styles applied to headers and forms
 - [ ] Manual verification of all TUI screens completed
 - [ ] No increase in code complexity (less manual string manipulation)
+
+**Descoped (Units 4-5 SKIPPED):**
+- ~~All list screens use `/` operator for composition~~ - Keep `join(lines, "\n")` pattern
 
 ---
 
