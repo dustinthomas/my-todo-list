@@ -427,7 +427,7 @@ end
 # =============================================================================
 
 """
-    render_form_panel(content::String; title::String="", width::Int=80)::Panel
+    render_form_panel(content::String; title::String="", width::Int=78)::Panel
 
 Wrap form content in a Panel with heavy box style for visual weight.
 
@@ -437,7 +437,7 @@ for form screens.
 # Arguments
 - `content::String`: Form content to wrap (fields, buttons, etc.)
 - `title::String`: Optional panel title (e.g., "Form Fields")
-- `width::Int`: Panel width (default 80)
+- `width::Int`: Panel width (default 78, not 80 to avoid tprint wrapping)
 
 # Returns
 - `Panel`: Term.jl Panel with heavy box style
@@ -447,8 +447,13 @@ for form screens.
 fields = render_todo_form_fields(...)
 panel = render_form_panel(fields, title="Enter Details")
 ```
+
+# Notes
+Width defaults to 78 (not 80) because Term.jl's tprint wraps lines at console
+width (typically 80). A panel at exactly 80 chars causes line-wrapping artifacts
+when the output is processed through tprint for markup rendering.
 """
-function render_form_panel(content::String; title::String="", width::Int=80)::Panel
+function render_form_panel(content::String; title::String="", width::Int=78)::Panel
     return Panel(
         content;
         title=isempty(title) ? nothing : title,

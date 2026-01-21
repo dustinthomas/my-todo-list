@@ -16,6 +16,7 @@
 | BUG-004 | Database locked error on save | HIGH | MERGED (PR #14) | bugfix/tui-db-locked |
 | BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
+| BUG-007 | Todo edit screen has severe rendering artifacts | HIGH | FIXED | bugfix/tui-edit-rendering |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -363,6 +364,78 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 
 ---
 
+## BUG-007: Todo edit screen has severe rendering artifacts
+
+**Priority:** HIGH
+**Status:** FIXED
+**Discovered:** 2026-01-20 during manual testing
+**Fixed:** 2026-01-20
+**Branch:** bugfix/tui-edit-rendering
+
+### Description
+The Todo Edit screen displays severe rendering artifacts. Multiple copies of form elements are stacked vertically, creating an unusable interface. The screen appears to accumulate renders instead of clearing and redrawing cleanly.
+
+### Screenshots
+`docs/bugs/screenshots/bug-007-edit-artifacts.png`
+
+### Steps to Reproduce
+1. Start TUI: `julia --project=. -e 'using TodoList; run_tui()'`
+2. Select a todo from the main list
+3. Press 'e' to edit the todo
+4. Observe: Multiple stacked form panels and buttons appear
+
+### Expected Behavior
+A single, clean edit form should appear with:
+- One header
+- One form panel with fields (Title, Description, Status, Priority, Dates)
+- One set of buttons (Save, Cancel)
+
+### Actual Behavior
+The screen shows:
+1. Multiple "Edit Todo" buttons stacked vertically (at least 5 visible)
+2. Multiple form panels with the same todo data (Title*, Description fields repeated)
+3. Fragmented text labels appearing outside their intended panels
+4. Content from previous renders accumulating instead of being cleared
+
+### Root Cause Analysis
+The issue was caused by Term.jl's `tprint` function wrapping lines at console width (typically 80 characters). When the form Panel was rendered at exactly 80 characters width, `tprint` would wrap lines, breaking the Panel borders:
+
+1. Panel line: `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━...━━━━━━━┓` (80 visible chars)
+2. After tprint: Line wraps, `┓` appears on new line
+3. Result: 34 direct lines → 61 tprint lines (nearly doubled)
+4. Visual: Panel borders broken, content appears duplicated
+
+Investigation trace:
+- `render_todo_form()` returns 34 lines with correct output
+- `tprint()` processes output, expanding to 61 lines
+- Line wrapping breaks Panel borders at exactly 80 chars
+- Each Panel line wraps, creating "stacked" appearance
+
+### Fix Applied
+Changed the default Panel width from 80 to 78 in `render_form_panel()` (src/tui/components/form.jl lines 456-463).
+
+This provides a 2-character buffer that prevents tprint from wrapping Panel lines.
+
+**Before:**
+```julia
+function render_form_panel(content::String; title::String="", width::Int=80)::Panel
+```
+
+**After:**
+```julia
+function render_form_panel(content::String; title::String="", width::Int=78)::Panel
+```
+
+Also updated the docstring to explain why the default is 78, not 80.
+
+### Verification
+- All 950 tests pass (170 TodoList + 780 TUI)
+- Edit form renders with 35 lines (correct, vs 61 broken lines before)
+- No broken border characters detected
+- All form screens (Add/Edit Todo, Add/Edit Project, Add/Edit Category) render correctly
+
+---
+
 ## Resolution Plan
 
 ### Recommended Fix Order
@@ -414,3 +487,4 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 | 2026-01-20 | BUG-004 FIXED | Added PRAGMA busy_timeout=5000 and journal_mode=WAL in connect_database(). All tests pass (960/960). |
 | 2026-01-20 | BUG-004 VERIFIED | Manual testing in Docker confirms database operations work without lock errors. |
 | 2026-01-20 | BUG-004 MERGED | PR #14 merged to main. |
+| 2026-01-20 | BUG-007 FIXED | Changed Panel width from 80 to 78 in render_form_panel(). Root cause: tprint wraps at console width. All tests pass (950/950). |
