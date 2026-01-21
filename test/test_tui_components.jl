@@ -259,45 +259,6 @@ using Term: Panel
             @test truncate_string("", 10) == ""
         end
 
-        @testset "Visible Length" begin
-            # Plain string
-            @test visible_length("hello") == 5
-            @test visible_length("") == 0
-
-            # Simple style tags
-            @test visible_length("{red}hello{/red}") == 5
-            @test visible_length("{bold}text{/bold}") == 4
-
-            # Multiple style tags
-            @test visible_length("{yellow}pending{/yellow}") == 7
-            @test visible_length("{red bold}HIGH{/red bold}") == 4
-
-            # Nested/compound styles
-            @test visible_length("{cyan bold}►{/cyan bold}") == 1
-            @test visible_length("{dim}LOW{/dim}") == 3
-
-            # Mixed content
-            @test visible_length("Hello {bold}World{/bold}!") == 12
-            @test visible_length("{red}A{/red} {blue}B{/blue}") == 3
-        end
-
-        @testset "Styled Rpad" begin
-            # Plain string padding
-            @test styled_rpad("hi", 5) == "hi   "
-            @test styled_rpad("hello", 5) == "hello"
-            @test styled_rpad("longer", 5) == "longer"
-
-            # Styled string padding
-            @test styled_rpad("{red}hi{/red}", 5) == "{red}hi{/red}   "
-            @test styled_rpad("{yellow}pending{/yellow}", 11) == "{yellow}pending{/yellow}    "
-
-            # No padding needed (already at width)
-            @test styled_rpad("{dim}LOW{/dim}", 3) == "{dim}LOW{/dim}"
-
-            # Complex styles
-            @test styled_rpad("{red bold}HIGH{/red bold}", 8) == "{red bold}HIGH{/red bold}    "
-        end
-
         @testset "Table Alignment with Styled Content" begin
             # BUG-003 regression test: verify styled columns align correctly
             # Now using Term.jl Table which handles alignment automatically

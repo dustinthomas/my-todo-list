@@ -190,13 +190,14 @@ function render_project_form(state::AppState, mode::Symbol)::String
         push!(lines, "")
     end
 
-    # Form fields
+    # Form fields wrapped in heavy-bordered panel
     form_output = render_project_form_fields(
         state.form_fields,
         state.form_field_index,
         state.form_errors
     )
-    push!(lines, form_output)
+    form_panel = render_form_panel(form_output)
+    push!(lines, string(form_panel))
     push!(lines, "")
 
     # Save/Cancel buttons indicator

@@ -410,6 +410,12 @@ todo stats    # Show statistics
 - **Immediate mode rendering**: Re-render entire screen on each update
 - **Fixed column widths**: Always specify widths for Term.jl tables to prevent misalignment
 - **Component composition**: Build complex screens from reusable components
+- **Term.jl Panel styling patterns**:
+  - `fit=true` for headers (auto-sizes to content, avoids terminal width issues)
+  - `box=:HEAVY` for form panels (visual weight for input areas)
+  - `box=:SIMPLE` for tables (clean, minimal borders)
+  - **Avoid fixed `width=80` for panels** - causes rendering artifacts if terminal is narrower
+  - **Avoid Panel `title`/`subtitle` parameters with empty content** - creates visual artifacts; use styled content inside panel body instead
 
 ### Navigation
 - **TerminalMenus.jl patterns**: Use for interactive selection and keyboard input
@@ -521,6 +527,27 @@ todo stats    # Show statistics
   - `/implement-step docs/features/FEATURE-units.md N` (correct)
   - `/implement-step plans/FEATURE.md N` (WRONG - now errors)
 - **Plan file is reference material** - Implementer reads it for details but executes from units file
+
+### 2026-01-20 - Term.jl layout operators unsuitable for vertical composition
+**What happened:** Unit 4 attempted to use Term.jl's `/` operator for vertical screen composition. It failed because the operator pads all elements to terminal width, causing repeated headers and huge gaps.
+
+**Why it happened:**
+1. Term.jl's `/` operator calls `leftalign()` internally which pads all components to match the widest
+2. This is designed for dashboard-style full-screen layouts, not component-based TUI rendering
+3. The `fit=true` parameter does not affect composition behavior (only initial Panel sizing)
+
+**Lessons learned:**
+- **Term.jl layout operators (`/`, `*`) are for full-screen composition** where elements fill terminal dimensions
+- **For vertical component stacking, use `join(lines, "\n")`** - this is the correct pattern
+- **Layout operators become valuable for horizontal composition** (split panes, sidebars) - not vertical
+- **Spike APIs before committing** - Unit 4 correctly spiked first, which allowed early failure detection
+- **The complexity threshold for layout systems is horizontal composition**, not component count
+
+**Rule to add:**
+- When evaluating TUI layout approaches, distinguish between:
+  - **Vertical composition**: Use string concatenation (`join(lines, "\n")`)
+  - **Horizontal composition**: Requires layout operators or custom layout engine
+- Before adopting a library feature, verify it matches your rendering model (immediate-mode vs retained-mode)
 
 ### Template for new lessons:
 ```
