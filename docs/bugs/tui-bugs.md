@@ -16,7 +16,7 @@
 | BUG-004 | Database locked error on save | HIGH | MERGED (PR #14) | bugfix/tui-db-locked |
 | BUG-005 | Form navigation enters submenu instead of next field | MEDIUM | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
-| BUG-007 | Todo edit screen has severe rendering artifacts | HIGH | FIXED | bugfix/tui-edit-rendering |
+| BUG-007 | Todo edit screen has severe rendering artifacts | HIGH | MERGED (PR #20) | bugfix/tui-edit-rendering |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -367,9 +367,10 @@ This prevents the `Nothing` return that was causing the `MethodError`. The fix i
 ## BUG-007: Todo edit screen has severe rendering artifacts
 
 **Priority:** HIGH
-**Status:** FIXED
+**Status:** MERGED (PR #20)
 **Discovered:** 2026-01-20 during manual testing
-**Fixed:** 2026-01-20
+**Fixed:** 2026-01-21
+**Merged:** 2026-01-21
 **Branch:** bugfix/tui-edit-rendering
 
 ### Description
@@ -487,4 +488,5 @@ Also updated the docstring to explain why the default is 78, not 80.
 | 2026-01-20 | BUG-004 FIXED | Added PRAGMA busy_timeout=5000 and journal_mode=WAL in connect_database(). All tests pass (960/960). |
 | 2026-01-20 | BUG-004 VERIFIED | Manual testing in Docker confirms database operations work without lock errors. |
 | 2026-01-20 | BUG-004 MERGED | PR #14 merged to main. |
-| 2026-01-20 | BUG-007 FIXED | Changed Panel width from 80 to 78 in render_form_panel(). Root cause: tprint wraps at console width. All tests pass (950/950). |
+| 2026-01-21 | BUG-007 FIXED | Changed Panel width from 80 to 78 in render_form_panel(). Root cause: tprint wraps at console width. All tests pass (950/950). |
+| 2026-01-21 | BUG-007 MERGED | PR #20 merged to main. |
