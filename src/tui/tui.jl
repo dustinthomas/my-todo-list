@@ -16,6 +16,7 @@ using Term
 
 # Include TUI submodules
 include("state.jl")
+include("screen_state.jl")
 include("input.jl")
 include("components/components.jl")
 include("screens/screens.jl")
