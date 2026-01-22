@@ -294,11 +294,11 @@ const TEXT_FIELD_INDICES = [1, 2, 5, 6]  # Title, Description, Start Date, Due D
 """Field indices that are radio/selection fields."""
 const RADIO_FIELD_INDICES = [3, 4]  # Status, Priority
 
-"""Status options for radio selection."""
-const STATUS_OPTIONS = ["pending", "in_progress", "completed", "blocked"]
+"""Status options for radio selection in todo form."""
+const TODO_STATUS_OPTIONS = ["pending", "in_progress", "completed", "blocked"]
 
-"""Priority options for radio selection."""
-const PRIORITY_OPTIONS = ["1", "2", "3"]
+"""Priority options for radio selection in todo form."""
+const TODO_PRIORITY_OPTIONS = ["1", "2", "3"]
 
 """Map field index to the corresponding form field symbol."""
 function get_field_symbol(index::Int)::Union{Symbol, Nothing}
@@ -449,7 +449,7 @@ function handle_radio_navigation!(state::AppState, idx::Int, key)::Nothing
         return nothing
     end
 
-    options = idx == 3 ? STATUS_OPTIONS : PRIORITY_OPTIONS
+    options = idx == 3 ? TODO_STATUS_OPTIONS : TODO_PRIORITY_OPTIONS
     current = get(state.form_fields, field_sym, options[1])
 
     # Find current index
@@ -484,7 +484,7 @@ function handle_radio_quick_select!(state::AppState, idx::Int, key::Char)::Nothi
         return nothing
     end
 
-    options = idx == 3 ? STATUS_OPTIONS : PRIORITY_OPTIONS
+    options = idx == 3 ? TODO_STATUS_OPTIONS : TODO_PRIORITY_OPTIONS
     num = Int(key) - Int('0')  # Convert '1' to 1, etc.
 
     if num >= 1 && num <= length(options)
