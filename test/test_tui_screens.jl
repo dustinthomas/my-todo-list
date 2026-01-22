@@ -622,6 +622,55 @@ include("tui_test_helpers.jl")
             @test state.form_fields[:title] == "john"
         end
 
+        @testset "Form Input - Radio Field Boundary (BUG-008 regression)" begin
+            # BUG-008: Crash when pressing up arrow at top of radio selection
+            # The bug was caused by STATUS_OPTIONS name collision between
+            # filter_menu.jl (includes nothing for "All") and todo_form.jl
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.form_field_index = 3  # Status field (radio)
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Test",
+                :description => "",
+                :status => "pending",  # First status option
+                :priority => "2",
+                :start_date => "",
+                :due_date => ""
+            )
+
+            # UP arrow at first option should NOT crash, should stay at "pending"
+            handle_todo_form_input!(state, KEY_UP)
+            @test state.form_fields[:status] == "pending"
+
+            # DOWN arrow should move to next option
+            handle_todo_form_input!(state, KEY_DOWN)
+            @test state.form_fields[:status] == "in_progress"
+
+            # DOWN to last option
+            handle_todo_form_input!(state, KEY_DOWN)
+            @test state.form_fields[:status] == "completed"
+            handle_todo_form_input!(state, KEY_DOWN)
+            @test state.form_fields[:status] == "blocked"
+
+            # DOWN at last option should NOT crash, should stay at "blocked"
+            handle_todo_form_input!(state, KEY_DOWN)
+            @test state.form_fields[:status] == "blocked"
+
+            # Test priority field boundary as well (index 4)
+            state.form_field_index = 4
+            state.form_fields[:priority] = "1"  # First priority option
+
+            # UP at first should stay
+            handle_todo_form_input!(state, KEY_UP)
+            @test state.form_fields[:priority] == "1"
+
+            state.form_fields[:priority] = "3"  # Last priority option
+
+            # DOWN at last should stay
+            handle_todo_form_input!(state, KEY_DOWN)
+            @test state.form_fields[:priority] == "3"
+        end
+
         @testset "Form Save - Add Mode" begin
             state = create_test_state()
             state.current_screen = TODO_ADD
