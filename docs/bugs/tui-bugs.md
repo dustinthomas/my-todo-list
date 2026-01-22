@@ -18,7 +18,7 @@
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-007 | Todo edit screen has severe rendering artifacts | HIGH | MERGED (PR #20) | bugfix/tui-edit-rendering |
 | BUG-008 | Crash when pressing up arrow at top of radio selection | HIGH | VERIFIED | bugfix/radio-navigation-boundary |
-| BUG-009 | Cannot navigate from [Save] to [Cancel] button on forms | MEDIUM | VERIFIED | bugfix/form-button-navigation |
+| BUG-009 | Cannot navigate from [Save] to [Cancel] button on forms | MEDIUM | MERGED (PR #24) | bugfix/form-button-navigation |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -517,10 +517,11 @@ Added regression test in `test/test_tui_screens.jl` to verify boundary behavior.
 ## BUG-009: Cannot navigate from [Save] to [Cancel] button on forms
 
 **Priority:** MEDIUM
-**Status:** VERIFIED
+**Status:** MERGED (PR #24)
 **Discovered:** 2026-01-22 during manual testing
 **Fixed:** 2026-01-22
 **Verified:** 2026-01-22
+**Merged:** 2026-01-22
 **Branch:** bugfix/form-button-navigation
 
 ### Description
@@ -651,3 +652,4 @@ Added `*_FORM_CANCEL_INDEX` constants to all three form files and updated:
 | 2026-01-22 | BUG-009 IN_PROGRESS | Starting fix. Root cause: Tab stops at SAVE_INDEX with no CANCEL_INDEX defined. |
 | 2026-01-22 | BUG-009 FIXED | Added CANCEL_INDEX constants to all form files. Tab navigates Save→Cancel, Enter on Cancel goes back. All tests pass (976/976). |
 | 2026-01-22 | BUG-009 VERIFIED | All 976 tests pass. Fix verified in todo_form.jl, project_form.jl, category_form.jl. CANCEL_INDEX exported from TodoList.jl. Regression tests confirm navigation. |
+| 2026-01-22 | BUG-009 MERGED | PR #24 merged to main. |
