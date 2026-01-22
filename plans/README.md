@@ -2,6 +2,22 @@
 
 Plans are **living documents** that guide development and track progress at the milestone level.
 
+## Active Plans
+
+| Plan | Status | Description |
+|------|--------|-------------|
+| [Phase 5: Extensibility](phase-5-extensibility.md) | IN PROGRESS | Screen state, abstract types, event-driven loop |
+
+## Archived Plans
+
+Completed plans are in `archive/`:
+
+| Plan | Completed | PRs |
+|------|-----------|-----|
+| [Phase 3: Database Layer](archive/phase-3-database-layer.md) | 2026-01-16 | #4 |
+| [Phase 4: TUI Components](archive/phase-4-tui-components.md) | 2026-01-18 | #5-#10 |
+| [Term.jl Enhancement](archive/term-jl-enhancement.md) | 2026-01-20 | #15-#19 |
+
 ## Document Hierarchy
 
 ```
@@ -15,51 +31,6 @@ What we want               How we'll build it           What to do next
 | **Spec** | Human | Requirements, acceptance criteria | Rarely |
 | **Plan** | Planner | Architecture, milestones, approach | After each milestone |
 | **Units** | Implementer | Micro-unit status, session logs | During implementation |
-
-## Plan as Living Document
-
-**Plans are updated as work progresses:**
-- Milestones marked complete with dates
-- Lessons learned added
-- Approach adjustments documented
-
-This keeps the plan as accurate documentation, not a stale artifact.
-
-## Plan Structure
-
-```markdown
-# Plan: [Feature Name]
-
-## Overview
-[2-3 sentences describing the feature]
-
-## Milestones
-| Milestone | Units | Status | Completed |
-|-----------|-------|--------|-----------|
-| Foundation | 1-2 | ✅ DONE | 2026-01-20 |
-| Core Features | 3-5 | 🔄 IN PROGRESS | - |
-| Polish | 6-7 | ⏳ PENDING | - |
-
-## Architecture
-[Key technical decisions and patterns]
-
-## Steps
-
-### Step 1: [Name]
-**Unit:** 1
-**Files:** [files to create/modify]
-[Implementation details]
-
-### Step 2: [Name]
-**Unit:** 1
-...
-
-## Risks & Mitigations
-[Potential issues and how to handle them]
-
-## Lessons Learned
-[Added after each milestone - what worked, what didn't]
-```
 
 ## Workflow
 
@@ -79,18 +50,6 @@ Creates both:
 # Then:
 /verify-ship docs/features/my-feature-units.md 1
 ```
-
-### Updating Plans
-Plans are updated by:
-- `/implement-step` - updates milestones on completion
-- `/verify-ship` - updates milestones when shipping
-
-## Naming Convention
-
-Use lowercase with hyphens:
-- `todo-filtering.md`
-- `phase-4-tui-components.md`
-- `user-authentication.md`
 
 ## Key Principles
 

@@ -165,7 +165,7 @@ function render_todo_table(todos::Vector{Todo}, selected_index::Int, scroll_offs
         data,
         header=["#", "Title", "Status", "Priority", "Due Date"],
         columns_widths=[8, 30, 13, 10, 12],
-        box=:SIMPLE
+        box=:ROUNDED
     )
 
     result = string(tbl)
@@ -234,7 +234,7 @@ function render_project_table(projects::Vector{Project}, selected_index::Int, to
         data,
         header=["#", "Name", "Description", "Todos", "Color"],
         columns_widths=[8, 22, 26, 7, 10],
-        box=:SIMPLE
+        box=:ROUNDED
     )
 
     return string(tbl)
@@ -293,7 +293,7 @@ function render_category_table(categories::Vector{Category}, selected_index::Int
         data,
         header=["#", "Name", "Todos", "Color"],
         columns_widths=[8, 32, 7, 10],
-        box=:SIMPLE
+        box=:ROUNDED
     )
 
     return string(tbl)
