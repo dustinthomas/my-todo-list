@@ -2,28 +2,30 @@
 
 This is the rulebook for Claude Code sessions working in this repository.
 
+> **Note:** `CLAUDE-WORKFLOW.md` exists for human onboarding. Claude sessions should NOT read it - all necessary rules are here.
+
+> **Required reading:** `CODE_INDEX.md` - Codebase navigation map. Read this to quickly find functions, files, and patterns.
+
 ## Goals
 
 - Simple, maintainable TUI (Terminal User Interface) todo list manager
 - Interactive terminal interface with keyboard navigation
-- Built primarily with Claude Code assistance following Boris Cherny "Plant" workflow
+- Built with Claude Code assistance following Boris Cherny "Plant" workflow
 - Human role: review, define requirements, approve design decisions
 - Claude role: plan, implement, test, document
 - Docker-first development for work project isolation
-- Future expansion path for wafer tracking with Rasters.jl
 
 ## Hard Rules
 
 - Never commit directly to `main`; always use feature branches
-  - This applies to ALL code changes: planning, implementation, testing, refactoring, bug fixes
   - Branch naming: `feature/NAME`, `bugfix/NAME`, `refactor/NAME`, or `test/NAME`
-  - Only exception: updating this CLAUDE.md file itself (can be on main with approval)
+  - Only exception: updating this CLAUDE.md file itself (with approval)
 - Always run tests before proposing a PR
 - Never touch the user's database file (`~/.todo-list/todos.db`)
 - Never commit database files or temporary files
 - Keep dependencies minimal (avoid bloat)
 - Prioritize simplicity over features
-- Prefer small, incremental PRs that fully implement one unit of work
+- **Keep work units as small as logically possible** - Each unit should represent the smallest coherent change that can be independently tested and merged. Prefer many small PRs over few large ones.
 
 ## Coding Style & Stack
 
@@ -37,522 +39,202 @@ This is the rulebook for Claude Code sessions working in this repository.
   - Type annotations for public function signatures
   - Docstrings for public functions
   - Follow Julia naming conventions (lowercase with underscores)
-- **Future:** Rasters.jl for wafer visualization (not in Phase 1)
 
-### Julia Version Policy
-- **New projects**: Always use the latest stable Julia release unless a dependency requires a specific version
-- **Existing/production code**: Stick with the version used to build the project until deciding to migrate
-- **Current project**: Julia 1.12+ (latest stable as of Phase 2)
+## Development Commands
 
-## Development Workflow
-
-### Setup
 ```bash
-cd C:\Git\Projects\my-todo-list
+# Setup
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 julia --project=. scripts/install.jl
-```
 
-### Run CLI
-```bash
-julia --project=. -e 'using TodoList; @main' [command] [args]
-```
+# Run TUI
+julia --project=. -e 'using TodoList; run_tui()'
 
-### Run Tests
-```bash
+# Run Tests
 julia --project=. test/runtests.jl
 ```
 
-### Initialize Database
-```bash
-julia --project=. scripts/install.jl
+## Document Hierarchy
+
+This project uses a three-tier documentation system:
+
+```
+SPEC (Human writes)     →  PLAN (Planner creates)    →  FEATURES (Work units)
+docs/features/FEATURE.md   plans/FEATURE.md             docs/features/FEATURE-units.md
+What we want               How we'll build it           What to do next
 ```
 
-### Context Management (for Claude Code sessions)
+| Document | Location | Owner | Purpose |
+|----------|----------|-------|---------|
+| **Spec** | `docs/features/FEATURE.md` | Human | Requirements, user stories, acceptance criteria |
+| **Plan** | `plans/FEATURE.md` | Planner | Architecture, approach, milestones (living doc) |
+| **Units** | `docs/features/FEATURE-units.md` | Planner → Implementer | Actionable micro-units with status |
 
-**Clear context after completing each major feature unit** to maintain token efficiency and fresh focus.
+**Key rules:**
+- Planner creates BOTH plan and units files
+- Plan file is updated after each milestone completes
+- Units file tracks implementation progress
+- Implementer works from units file, references plan file
 
-**Unit of work definition:**
-- Feature fully implemented (e.g., Todo CRUD, filtering functions)
-- All tests written and passing
-- Plan file updated with ✅ status and handoff notes
-- Code follows established patterns
+## Work Units
 
-**Before clearing context:**
-1. Run full test suite: `julia --project=. test/runtests.jl`
-2. Verify all tests pass
-3. Update `plans/[phase-name].md` with:
-   - ✅ Completed step checkmarks
-   - Current status summary
-   - Files created/modified with line counts
-   - Test results (pass count)
-   - Next steps with specific instructions
-   - Key patterns to follow
-   - Important gotchas/learnings
-4. Commit work to feature branch (optional but recommended)
+A **Work Unit** is the smallest coherent, testable chunk of work:
+- Results in ONE pull request
+- Can be implemented, tested, and merged independently
+- Has clear acceptance criteria
 
-**After clearing context (next session):**
-1. Read `CLAUDE.md` (this file) for rules and patterns
-2. Read `plans/[phase-name].md` for current status and next steps
-3. Check git branch: `git status`
-4. Run tests to verify clean state: `julia --project=. test/runtests.jl`
-5. Review existing code patterns in relevant files
-6. Begin next unit of work
-
-**Benefits:**
-- Token efficiency: Each task gets full context budget
-- Fresh perspective: No accumulated implementation cruft
-- Clear boundaries: Forces proper "definition of done"
-- Pattern reinforcement: Must read existing code to match style
-- Real-world alignment: Developers rely on tests/docs, not memory
-
-## Work Units (PR-Sized Chunks)
-
-### What is a Work Unit?
-
-A **Work Unit** is a grouping of plan steps that forms a coherent, testable chunk of work:
-- **Self-contained**: Can be implemented, tested, and merged independently
-- **PR-sized**: Results in ONE pull request (typically 1-3 days of work)
-- **Testable**: Has clear acceptance criteria that can be verified
-- **Depends on prior units**: Units are ordered by dependency
-
-### Work Unit Lifecycle
-
+**Lifecycle:**
 ```
 PENDING → IN_PROGRESS → IMPLEMENTED → VERIFIED → MERGED
-                │              │
-                │              └── FAILED → back to IN_PROGRESS
-                │
-                └── BLOCKED (dependency not met)
 ```
 
-### Workflow with Work Units
+**Skills update files automatically:**
+- `/implement-step` updates units file status + plan milestones
+- `/verify-ship` updates units file + plan on milestone complete
 
-```
-┌──────────────────┐
-│ Feature Spec     │
-│ docs/features/   │
-└────────┬─────────┘
-         │
-         ▼
-┌──────────────────┐     ┌─────────────────────────────────────────┐
-│ /plan-feature    │ ──► │ TWO OUTPUTS:                            │
-│ (Planner)        │     │  1. plans/FEATURE.md (detailed steps)   │
-│ READ-ONLY        │     │  2. docs/features/FEATURE-units.md      │
-└──────────────────┘     │     (work units checklist)              │
-                         └────────────────┬────────────────────────┘
-                                          │
-         ┌────────────────────────────────┴────────────────────────┐
-         │                                                         │
-         ▼                                                         ▼
-┌─────────────────────┐                              ┌─────────────────────┐
-│ Unit 1              │                              │ Unit N              │
-│ CLEAR → Implement   │                              │ CLEAR → Implement   │
-│ CLEAR → Verify      │                              │ CLEAR → Verify      │
-│ CLEAR → Ship (PR)   │ ─── ... ───────────────────► │ CLEAR → Ship (PR)   │
-└─────────────────────┘                              └─────────────────────┘
-```
-
-### Key Files
-
-| File | Purpose | Created By |
-|------|---------|------------|
-| `docs/features/FEATURE.md` | Feature specification (requirements) | Human |
-| `plans/FEATURE.md` | Detailed implementation steps | Planner |
-| `docs/features/FEATURE-units.md` | Work units checklist | Planner |
-
-### Commands by Role
-
-| Role | Command | Input | Output |
-|------|---------|-------|--------|
-| Planner | `/plan-feature` | Feature spec | Plan + Work units files |
-| Implementer | `/implement-step UNITS-FILE N` | Work unit N | Code + tests for unit N |
-| Tester | `/verify-feature UNITS-FILE N` | Work unit N | PASS/FAIL report |
-| Bug Documenter | `/document-bug` | Bug description | Bug entry in docs/bugs/ |
-| Bug Fixer | `/fix-bug BUG-ID` | Bug ID from docs/bugs/ | Fixed code + updated bug doc |
-| Refactorer | `/simplify` | File or feature | Improved code |
-| Shipper | `/commit-push-pr` | Branch | Commit + PR |
-
-## Session Isolation Rules
-
-### Core Principle
+## Session Rules
 
 **Each session = One role, One work unit**
 
-Context MUST be cleared between:
-- Planner → Implementer
-- Implementer → Tester
-- Tester → Implementer (on FAIL)
-- Tester → Shipper (on PASS)
-- Unit N → Unit N+1
-- Bug Documenter → Bug Fixer (when user wants to fix immediately)
-- Bug Fixer → Shipper (after fix)
-- Bug Fixer → Verifier (for manual verification)
-- Bug N → Bug N+1 (for unrelated bugs)
+| Role | Reads | Outputs |
+|------|-------|---------|
+| Planner | CLAUDE.md, CODE_INDEX.md, Spec | Plan + Units files |
+| Implementer | CLAUDE.md, CODE_INDEX.md, Units file, Plan | Code + tests |
+| Verifier | CLAUDE.md, Units file | PASS/FAIL report |
+| Bug Fixer | CLAUDE.md, CODE_INDEX.md, Bug doc | Fixed code |
 
-### Why Session Isolation?
+**At session end:**
+1. Update units file with status
+2. Update plan file if milestone complete
+3. Tell user: "CLEAR CONTEXT, then run [next command]"
 
-1. **Fresh context**: Each session gets full token budget
-2. **Clean handoffs**: Work units file tracks state between sessions
-3. **Reduced errors**: No stale context leading to mistakes
-4. **Parallel work**: Different units can be worked on by different sessions
-
-### What Each Session Reads
-
-| Role | Must Read | May Read |
-|------|-----------|----------|
-| Planner | CLAUDE.md, Feature spec | Existing code patterns |
-| Implementer | CLAUDE.md, Work units file, Plan | Source files for unit |
-| Tester | CLAUDE.md, Work units file | Test files, source files |
-| Bug Documenter | CLAUDE.md, Existing bug docs (docs/bugs/) | Source files for context |
-| Bug Fixer | CLAUDE.md, Bug doc (docs/bugs/) | Source files for bug |
-| Refactorer | CLAUDE.md, Source files | Tests |
-| Shipper | CLAUDE.md, Git status | Work units file, Bug doc |
-
-### Session Handoff Protocol
-
-**At end of every session:**
-1. Update work units file with current status
-2. Add session log entry with notes
-3. Report next steps explicitly
-4. Tell user: "CLEAR CONTEXT, then run [next command]"
-
-**At start of every session:**
-1. Read CLAUDE.md
-2. Read work units file
-3. Find current unit status
-4. Proceed with appropriate action
-
-## TodoWrite Tool Usage
-
-### When to Use TodoWrite
-
-**USE FOR:** Session-internal progress tracking
-
-```
-Working on Unit 2: Base Components
-
-- [x] Create header.jl
-- [x] Create footer.jl
-- [ ] Create message.jl
-- [ ] Create table.jl
-- [ ] Write tests
-- [ ] Run tests
-```
-
-TodoWrite helps YOU track progress within a single implementation session.
-
-### When NOT to Use TodoWrite
-
-**DON'T USE FOR:** Cross-session planning or state tracking
-
-The work units file (`docs/features/FEATURE-units.md`) is the persistent state tracker.
-TodoWrite is session-scoped and lost on context clear.
-
-| Tracking Need | Use This |
-|---------------|----------|
-| Steps within current session | TodoWrite |
-| Unit status across sessions | Work units file |
-| Overall feature progress | Work units file |
-| Implementation details | Plan file |
-
-### Rule
-
-- **Work units file**: Source of truth for progress
-- **TodoWrite**: Convenience for current session only
-- **Never rely on TodoWrite** surviving context clears
+**TodoWrite:** Use for session-internal tracking only. Units file is the cross-session source of truth.
 
 ## Project Structure
 
 ```
 my-todo-list/
-├── CLAUDE.md              # This file (rulebook)
+├── CLAUDE.md              # This file (rulebook for Claude)
+├── CLAUDE-WORKFLOW.md     # Human onboarding guide (Claude: do not read)
+├── CODE_INDEX.md          # Codebase navigation map
 ├── README.md              # User documentation
 ├── Project.toml           # Dependencies
-├── Manifest.toml          # Lock file
-├── .gitignore             # Git ignore patterns
-├── LICENSE                # Project license
 │
 ├── src/
 │   ├── TodoList.jl       # Main module entry point
 │   ├── models.jl         # Data structures (Todo, Project, Category)
 │   ├── database.jl       # Database initialization and connections
 │   ├── queries.jl        # CRUD operations and SQL queries
-│   ├── cli.jl            # CLI commands using Comonicon
-│   └── visualization.jl  # Gantt chart HTML generation
+│   └── tui/              # TUI subsystem
+│       ├── tui.jl        # Entry point: run_tui()
+│       ├── state.jl      # AppState, Screen enum
+│       ├── input.jl      # Key handling
+│       ├── render.jl     # Screen dispatch
+│       ├── components/   # Reusable UI components
+│       └── screens/      # Screen implementations
 │
 ├── test/
 │   ├── runtests.jl       # Test suite entry point
-│   ├── test_database.jl  # Database tests
-│   └── test_queries.jl   # Query logic tests
+│   └── test_*.jl         # Test files by area
 │
 ├── scripts/
 │   ├── install.jl        # First-time database setup
 │   └── demo.jl           # Generate sample data
 │
+├── plans/                 # Implementation plans (living docs)
+│
 └── docs/
-    └── examples.md       # Usage examples
+    ├── features/         # Specs and units files
+    └── bugs/             # Bug tracking
 ```
 
 ## Branching Strategy
 
-**All code changes must happen on feature branches, never directly on `main`.**
+| Role | Branch Prefix | Example |
+|------|---------------|---------|
+| Implementer | `feature/` | `feature/add-filter` |
+| Bug Fixer | `bugfix/` | `bugfix/null-pointer` |
+| Refactor | `refactor/` | `refactor/simplify-state` |
 
-| Context | Branch Prefix | Example | When to Use |
-|---------|---------------|---------|-------------|
-| Planner | N/A | N/A | Read-only; no branch needed (creates plan files only) |
-| Bug Documenter | N/A | N/A | Read-only; no branch needed (creates bug docs only) |
-| Implementer | `feature/` | `feature/cli-commands` | Adding new features or capabilities |
-| Tester | `bugfix/` or `test/` | `bugfix/fix-date-parsing` | Fixing test failures or adding tests |
-| Refactor | `refactor/` | `refactor/simplify-queries` | Code improvements without behavior changes |
-| Bug Fix | `bugfix/` | `bugfix/null-pointer` | Fixing broken functionality |
-
-### Workflow for ALL Contexts
-
-1. **Before making ANY code changes**: `git checkout -b TYPE/NAME`
-2. **Make changes**: Edit, test, iterate
-3. **Test thoroughly**: Run all relevant tests
-4. **Commit**: With descriptive message
-5. **Push**: `git push -u origin TYPE/NAME`
-6. **Create PR**: For review (never merge directly)
-
-### Exceptions (Direct Commits to Main Allowed)
-
-- Updating `CLAUDE.md` itself with explicit approval
-- **Updating units file status to MERGED after PR merge** - This is required because:
-  - PR numbers aren't known until PR is created
-  - Creating a branch for status-only updates is overkill
-  - Keeps units file as accurate source of truth
-
-  Format: `git commit -m "docs: update units status to MERGED (PR #N)"`
-
-- Everything else: use a branch
+**Exceptions (direct commits to main):**
+- Updating `CLAUDE.md` with explicit approval
+- Updating units file status to MERGED after PR merge
 
 ## Testing Requirements
 
 - All database operations must have tests
-- Test with empty database and populated database (use `:memory:` for tests)
-- Test edge cases (invalid dates, missing foreign keys, duplicate names)
-- Test CLI command parsing
-- Never commit test databases or temporary files
+- Test with `:memory:` database for isolation
+- Test edge cases (invalid dates, missing foreign keys, duplicates)
+- Run full test suite before any PR
+- Never commit test databases
 
 ## Data Model
 
-### Database Schema
+**projects:** id, name (UNIQUE), description, color, created_at, updated_at
 
-**projects table:**
-- id (PRIMARY KEY)
-- name (UNIQUE, NOT NULL)
-- description
-- color (hex, for Gantt charts)
-- created_at, updated_at
+**categories:** id, name (UNIQUE), color, created_at
 
-**categories table:**
-- id (PRIMARY KEY)
-- name (UNIQUE, NOT NULL)
-- color (hex, for Gantt charts)
-- created_at
+**todos:** id, title, description, status, priority, project_id, category_id, start_date, due_date, completed_at, created_at, updated_at
 
-**todos table:**
-- id (PRIMARY KEY)
-- title (NOT NULL)
-- description
-- status (pending/in_progress/completed/blocked)
-- priority (1=high, 2=medium, 3=low)
-- project_id (FOREIGN KEY)
-- category_id (FOREIGN KEY)
-- start_date (ISO 8601: YYYY-MM-DD)
-- due_date (ISO 8601: YYYY-MM-DD)
-- completed_at
-- created_at, updated_at
+- Status: pending, in_progress, completed, blocked
+- Priority: 1 (high), 2 (medium), 3 (low)
+- Dates: ISO 8601 (YYYY-MM-DD)
 
-### Database Location
-
-- **User database**: `~/.todo-list/todos.db` (never commit this)
-- **Test database**: Use `:memory:` or temporary files
-
-## Commands Reference
-
-```bash
-# Project management
-todo project add <name> [--description=<desc>] [--color=<hex>]
-todo project list
-todo project remove <name>
-
-# Category management
-todo category add <name> [--color=<hex>]
-todo category list
-todo category remove <name>
-
-# Todo operations
-todo add <title> [--description=<desc>] [--project=<name>]
-                 [--category=<name>] [--priority=<1-3>]
-                 [--start=<YYYY-MM-DD>] [--due=<YYYY-MM-DD>]
-
-todo list [--project=<name>] [--category=<name>] [--status=<status>]
-todo show <id>
-todo update <id> [options...]
-todo complete <id>
-todo delete <id>
-
-# Visualization
-todo gantt [--project=<name>] [--output=<path>] [--open]
-
-# Utility
-todo init     # Initialize database (first run)
-todo stats    # Show statistics
-```
-
-## TUI Development Guidelines
+## TUI Guidelines
 
 ### Rendering
-- **Use Term.jl for ALL output**: Panels, tables, styled text
-- **Immediate mode rendering**: Re-render entire screen on each update
-- **Fixed column widths**: Always specify widths for Term.jl tables to prevent misalignment
-- **Component composition**: Build complex screens from reusable components
-- **Term.jl Panel styling patterns**:
-  - `fit=true` for headers (auto-sizes to content, avoids terminal width issues)
-  - `box=:HEAVY` for form panels (visual weight for input areas)
-  - `box=:SIMPLE` for tables (clean, minimal borders)
-  - **Avoid fixed `width=80` for panels** - causes rendering artifacts if terminal is narrower
-  - **Avoid Panel `title`/`subtitle` parameters with empty content** - creates visual artifacts; use styled content inside panel body instead
+- Use Term.jl for ALL output (Panels, tables, styled text)
+- `fit=true` for headers; `box=:HEAVY` for forms; `box=:SIMPLE` for tables
+- Avoid fixed `width=80` - causes artifacts on narrow terminals
+- Vertical composition: use `join(lines, "\n")` (not `/` operator)
 
 ### Navigation
-- **TerminalMenus.jl patterns**: Use for interactive selection and keyboard input
-- **Standard keys**:
-  - Arrow keys: Navigation
-  - Enter: Select/Confirm
-  - Esc/q: Back/Quit
-  - Letter keys: Quick actions (a=add, e=edit, d=delete, f=filter, etc.)
-- **Consistent across screens**: Same key should do same thing everywhere
+- Arrow keys: Navigate
+- Enter: Select/Confirm
+- Esc/q: Back/Quit
+- Letter keys: Quick actions (a=add, e=edit, d=delete, f=filter)
 
 ### State Management
-- **Separate UI state from data**: Keep AppState struct for UI, database for data
-- **Immutable updates preferred**: Use `@set` macro or return new state
-- **Screen transitions**: Clear state that maintains current screen, selected item, filters
+- Single mutable `AppState` struct
+- Per-screen state in `screen_state.jl`
+- Functions with `!` suffix modify state
 
 ### Testing
-- **Unit test business logic**: Database operations, filtering, data transformations
-- **Component tests**: Verify rendering produces correct output types (Panel, Table)
-- **Content verification**: Test that rendered output contains expected text, not just types
+- Component tests: verify type AND content
   ```julia
-  # Good:
   @test output isa Panel
-  @test contains(string(output), "Todo List")
-
-  # Bad (insufficient):
-  @test output isa Panel  # Type check alone is not enough
+  @test contains(string(output), "Expected Text")
   ```
-- **Manual testing required**: Visual verification of TUI appearance and keyboard navigation
-- **Manual test checklist**: Document expected behavior for manual testing
-
-### Error Handling
-- **Show errors in dedicated panel**: Don't break UI
-- **User-friendly messages**: Avoid stack traces in TUI
-- **Graceful degradation**: If component fails to render, show error panel instead
-
-### Docker Development
-- **All development in Docker**: Required for work projects
-- **docker-compose with TTY**: `stdin_open: true` and `tty: true` required for interactive TUI
-- **Mounted volumes**: Use for live editing (hot reload)
-- **Test in Docker**: Always run `./scripts/docker-test` before committing
-
-### Performance
-- **Efficient screen updates**: Only re-render when state changes
-- **Limit data fetched**: Don't load entire database for displays
-- **Responsive input**: Keyboard handling should feel instant
+- Manual testing required for visual/keyboard verification
 
 ## Implementation Notes
 
-- **Windows paths**: Use Julia's `homedir()` and `joinpath()` for cross-platform compatibility
-- **Startup time**: Julia CLI has ~2s startup. For production, consider compiling to binary with PackageCompiler.jl
-- **Database**: Always use string keys for SQLite queries (`row["column"]` not `row[:column]`)
-- **Error handling**: Wrap database operations in try-catch blocks with user-friendly error messages
-- **Foreign keys**: Enable with `PRAGMA foreign_keys = ON` immediately after opening connection
+- Use `homedir()` and `joinpath()` for cross-platform paths
+- Use string keys for SQLite: `row["column"]` not `row[:column]`
+- Enable foreign keys: `PRAGMA foreign_keys = ON`
+- Wrap database operations in try-catch with user-friendly messages
 
 ## Lessons Learned
 
-<!-- Add entries here when mistakes are made, so we never repeat them -->
-
 ### 2026-01-16 - Implement with tests incrementally, not waterfall
-**What happened:** During Phase 3 database implementation, we implemented Project and Category CRUD first, planning to write tests later in Step 9. This is waterfall development, not incremental/TDD.
-
-**Why it happened:** The approved plan structured it as "implement all features → create test suite → run tests" rather than "create test suite → test-driven implementation of each feature."
-
-**Rule to add:**
-- **Create test suite structure FIRST** before implementing features
-- **Write tests for each feature BEFORE implementing it** (TDD for business logic)
-- **Keep test suite passing** throughout development
-- **Run tests after EVERY implementation step** - never batch testing
-- **Exception:** Choose appropriate testing method for the use case:
-  - Logic/algorithms: TDD (write tests first)
-  - Database operations: Integration tests (test actual DB behavior)
-  - UI/TUI: Component tests + manual verification checklists
-  - API contracts: Contract tests
-- **Plans should reflect incremental delivery**, not big-bang integration
+**What happened:** Implemented features first, planned tests for later.
+**Rule:** Create test suite FIRST. Write tests BEFORE implementing. Run tests after EVERY step.
 
 ### 2026-01-17 - Planner wrote code instead of creating plan
-**What happened:** The planner role created test code (`test/test_components.jl`) and a design document (`docs/tui-design.md`) but did NOT create an implementation plan in the `plans/` folder. It also did not instruct the user to clear context and invoke the implementer.
-
-**Why it happened:**
-1. Planner conflated "TDD test-first" with planning - but TDD is implementation work, not planning
-2. Design documents are useful but are NOT the same as implementation plans with steps
-3. No explicit handoff instruction to clear context and switch to implementer session
-
-**Rules to add:**
-- **Planner MUST create `plans/FEATURE-NAME.md`** - This is the PRIMARY deliverable of planning, not optional
-- **Planner MUST NOT write any `.jl` files** - Tests are implementation, not planning
-- **Design docs (`docs/`) are supplementary** - They do not replace implementation plans
-- **Planner MUST end with explicit handoff:** Tell user to clear context and run `/implement-step`
-- **Implementer owns test creation** - TDD test-first approach happens during implementation, not planning
-- **Before ending a planning session, verify:** The plan file exists in `plans/` with all required sections (Steps, Files, Acceptance Criteria, Testing Strategy)
+**What happened:** Planner created test code instead of plan file.
+**Rule:** Planner MUST create `plans/FEATURE.md`. Planner MUST NOT write `.jl` files.
 
 ### 2026-01-18 - Implementer invoked with plan file instead of units file
-**What happened:** The `/implement-step` command was run pointing at `plans/phase-4-tui-components.md` (the detailed plan) instead of `docs/features/phase-4-tui-components-units.md` (the work units file). This caused the implementer to work from the wrong file type.
-
-**Why it happened:**
-1. Both files exist and have similar names
-2. The skill commands did not validate the input file type
-3. Easy to confuse which file goes with which command
-
-**Rules to add:**
-- **Skills MUST validate input file types** - `/implement-step` and `/verify-feature` now validate:
-  - File must be in `docs/features/` directory
-  - File must end with `-units.md`
-  - If wrong file provided, show error with correct path suggestion
-- **File purposes are distinct:**
-  - `plans/*.md` = Detailed HOW (implementation steps, TDD patterns, testing strategy)
-  - `docs/features/*-units.md` = Actionable WHAT (PR-sized work units with acceptance criteria)
-- **Commands use units file, not plan file:**
-  - `/implement-step docs/features/FEATURE-units.md N` (correct)
-  - `/implement-step plans/FEATURE.md N` (WRONG - now errors)
-- **Plan file is reference material** - Implementer reads it for details but executes from units file
+**What happened:** `/implement-step` was given plan file instead of units file.
+**Rule:** Skills validate input: must be in `docs/features/` and end with `-units.md`.
 
 ### 2026-01-20 - Term.jl layout operators unsuitable for vertical composition
-**What happened:** Unit 4 attempted to use Term.jl's `/` operator for vertical screen composition. It failed because the operator pads all elements to terminal width, causing repeated headers and huge gaps.
+**What happened:** `/` operator caused rendering artifacts.
+**Rule:** Use `join(lines, "\n")` for vertical composition. Layout operators are for horizontal only.
 
-**Why it happened:**
-1. Term.jl's `/` operator calls `leftalign()` internally which pads all components to match the widest
-2. This is designed for dashboard-style full-screen layouts, not component-based TUI rendering
-3. The `fit=true` parameter does not affect composition behavior (only initial Panel sizing)
-
-**Lessons learned:**
-- **Term.jl layout operators (`/`, `*`) are for full-screen composition** where elements fill terminal dimensions
-- **For vertical component stacking, use `join(lines, "\n")`** - this is the correct pattern
-- **Layout operators become valuable for horizontal composition** (split panes, sidebars) - not vertical
-- **Spike APIs before committing** - Unit 4 correctly spiked first, which allowed early failure detection
-- **The complexity threshold for layout systems is horizontal composition**, not component count
-
-**Rule to add:**
-- When evaluating TUI layout approaches, distinguish between:
-  - **Vertical composition**: Use string concatenation (`join(lines, "\n")`)
-  - **Horizontal composition**: Requires layout operators or custom layout engine
-- Before adopting a library feature, verify it matches your rendering model (immediate-mode vs retained-mode)
-
-### Template for new lessons:
+### Template
 ```
 ### [DATE] - [Brief description]
-**What happened:** [describe the mistake]
-**Why it happened:** [root cause]
-**Rule to add:** [new rule to prevent recurrence]
+**What happened:** [describe]
+**Rule:** [new rule]
 ```

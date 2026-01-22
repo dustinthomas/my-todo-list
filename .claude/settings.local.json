@@ -1,7 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(test -d test:*)",
+      "Bash(test:*)",
+      "Bash(git stash:*)",
+      "Bash(julia --project=. -e:*)",
+      "Bash(julia --project=.:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(./scripts/docker-start:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create --title \"fix: resolve database locked error on save \\(BUG-004\\)\" --body \"$\\(cat <<''EOF''\n## Summary\n\nFixes BUG-004: \"database is locked\" error when saving todos in the TUI, particularly in Docker environments with bind mounts.\n\n## Problem\n\nWhen saving a todo in the TUI, users encountered `SQLite.SQLiteException\\(\"database is locked\"\\)`. This occurred due to:\n1. SQLite''s default `busy_timeout` of 0ms \\(fails immediately on any lock\\)\n2. Docker bind mount limitations on Windows hosts where file locking doesn''t work reliably\n\n## Solution\n\nUpdated `connect_database\\(\\)` in `src/database.jl` to set two PRAGMA settings:\n- **`busy_timeout = 5000`**: Wait up to 5 seconds for locks to be released\n- **`journal_mode = WAL`**: Enable Write-Ahead Logging for better concurrency \\(file DBs only\\)\n\n## Changes\n\n- `src/database.jl`: Added PRAGMA settings in `connect_database\\(\\)` function\n- `docs/bugs/tui-bugs.md`: Updated BUG-004 status to FIXED with root cause analysis\n\n## Testing\n\n- [x] All tests pass \\(960/960 tests\\)\n- [x] Verified PRAGMA settings are applied correctly\n- [x] Verified in-memory databases don''t get WAL mode \\(uses memory journal\\)\n- [x] Manual testing in Docker - all operations work without lock errors\n\n## Related\n\n- Fixes BUG-004 \\(docs/bugs/tui-bugs.md\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(gh pr create:*)",
+      "Bash(wc:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(^- \")",
+      "Bash(git -C \"C:/Git/Projects/my-todo-list\" status --short)"
     ]
   }
 }

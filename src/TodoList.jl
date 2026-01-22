@@ -54,6 +54,10 @@ export set_message!, clear_message!
 export setup_delete!, clear_delete!
 export clear_all_filters!
 
+# Export screen state helpers
+export get_screen_state, set_screen_state!, has_screen_state
+export clear_screen_state!, clear_all_screen_states!
+
 # Export TUI entry point
 export run_tui
 

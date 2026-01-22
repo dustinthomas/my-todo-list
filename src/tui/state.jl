@@ -96,6 +96,9 @@ Mutable struct holding all TUI application state.
 
 ## Control
 - `running::Bool`: Whether the TUI is running
+
+## Per-Screen State
+- `screen_state::Dict{Screen, Any}`: Screen-specific state storage
 """
 mutable struct AppState
     # Navigation
@@ -140,6 +143,9 @@ mutable struct AppState
 
     # Running flag
     running::Bool
+
+    # Per-screen state storage (extensibility)
+    screen_state::Dict{Screen, Any}
 end
 
 """
@@ -203,7 +209,10 @@ function create_initial_state(db::SQLite.DB)::AppState
         db,                 # db
 
         # Running
-        true                # running
+        true,               # running
+
+        # Per-screen state
+        Dict{Screen, Any}() # screen_state
     )
 
     # Load initial data
