@@ -10,7 +10,7 @@ Refactor TUI architecture to enable extensibility without core changes.
 ## Work Units
 
 ### Unit 1: Screen State Module
-**Status:** PENDING
+**Status:** MERGED (PR #21)
 **Scope:** Add `screen_state` field to AppState + helper functions
 
 **Files:**
@@ -20,12 +20,12 @@ Refactor TUI architecture to enable extensibility without core changes.
 - `test/test_screen_state.jl` (new)
 
 **Acceptance Criteria:**
-- [ ] `screen_state::Dict{Screen, Any}` field in AppState
-- [ ] `get_screen_state(state, screen, default)` helper
-- [ ] `set_screen_state!(state, screen, value)` helper
-- [ ] `clear_screen_state!(state, screen)` helper
-- [ ] All existing tests pass
-- [ ] New tests for screen state helpers
+- [x] `screen_state::Dict{Screen, Any}` field in AppState
+- [x] `get_screen_state(state, screen, default)` helper
+- [x] `set_screen_state!(state, screen, value)` helper
+- [x] `clear_screen_state!(state, screen)` helper
+- [x] All existing tests pass
+- [x] New tests for screen state helpers
 
 ---
 
@@ -170,6 +170,7 @@ Refactor TUI architecture to enable extensibility without core changes.
 | Date | Unit | Action | Notes |
 |------|------|--------|-------|
 | 2026-01-20 | Setup | Created units file | Starting Phase 5 implementation |
+| 2026-01-22 | 1 | MERGED | PR #21 merged - screen state management complete |
 
 ## Dependency Graph
 
