@@ -108,7 +108,7 @@ export format_detail_value, format_detail_priority, format_detail_status
 export render_todo_form, handle_todo_form_input!
 export validate_todo_form!, save_todo_form!, init_form_from_todo!
 export is_valid_date
-export TODO_FORM_SHORTCUTS, TODO_FORM_FIELD_COUNT, TODO_FORM_SAVE_INDEX
+export TODO_FORM_SHORTCUTS, TODO_FORM_FIELD_COUNT, TODO_FORM_SAVE_INDEX, TODO_FORM_CANCEL_INDEX
 
 # Export screen functions - Filter Menu
 export render_filter_menu, handle_filter_menu_input!
@@ -126,7 +126,7 @@ export PROJECT_LIST_SHORTCUTS
 # Export screen functions - Project Form
 export render_project_form, handle_project_form_input!
 export validate_project_form!, save_project_form!, init_form_from_project!
-export PROJECT_FORM_SHORTCUTS, PROJECT_FORM_FIELD_COUNT, PROJECT_FORM_SAVE_INDEX
+export PROJECT_FORM_SHORTCUTS, PROJECT_FORM_FIELD_COUNT, PROJECT_FORM_SAVE_INDEX, PROJECT_FORM_CANCEL_INDEX
 
 # Export screen functions - Category List
 export render_category_list, handle_category_list_input!
@@ -136,7 +136,7 @@ export CATEGORY_LIST_SHORTCUTS
 # Export screen functions - Category Form
 export render_category_form, handle_category_form_input!
 export validate_category_form!, save_category_form!, init_form_from_category!
-export CATEGORY_FORM_SHORTCUTS, CATEGORY_FORM_FIELD_COUNT, CATEGORY_FORM_SAVE_INDEX
+export CATEGORY_FORM_SHORTCUTS, CATEGORY_FORM_FIELD_COUNT, CATEGORY_FORM_SAVE_INDEX, CATEGORY_FORM_CANCEL_INDEX
 
 # Export screen functions - Delete Confirmation
 export render_delete_confirm, handle_delete_confirm_input!

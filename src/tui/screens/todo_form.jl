@@ -16,6 +16,9 @@ const TODO_FORM_FIELD_COUNT = 6
 """Field index for Save button (after all form fields)."""
 const TODO_FORM_SAVE_INDEX = 7
 
+"""Field index for Cancel button (after Save button)."""
+const TODO_FORM_CANCEL_INDEX = 8
+
 """Keyboard shortcuts for todo form screen."""
 const TODO_FORM_SHORTCUTS = [
     ("Tab", "Next Field"),
@@ -272,6 +275,8 @@ function render_todo_form(state::AppState, mode::Symbol)::String
     # Save/Cancel buttons indicator
     if state.form_field_index == TODO_FORM_SAVE_INDEX
         push!(lines, "{cyan bold}► [Save]{/cyan bold}    [Cancel]")
+    elseif state.form_field_index == TODO_FORM_CANCEL_INDEX
+        push!(lines, "  [Save]    {cyan bold}► [Cancel]{/cyan bold}")
     else
         push!(lines, "  {dim}[Save]    [Cancel]{/dim}")
     end
@@ -373,7 +378,7 @@ function handle_todo_form_input!(state::AppState, key)::Nothing
 
     # Navigate to next field (Tab only - j is for typing)
     if key == KEY_TAB
-        if idx < TODO_FORM_SAVE_INDEX
+        if idx < TODO_FORM_CANCEL_INDEX
             state.form_field_index += 1
         end
         return nothing
@@ -397,10 +402,16 @@ function handle_todo_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Enter - save form (from any field or save button)
+    # Enter - save form or cancel based on button
     if key == KEY_ENTER
-        mode = state.current_screen == TODO_ADD ? :add : :edit
-        save_todo_form!(state, mode)
+        if idx == TODO_FORM_CANCEL_INDEX
+            # Cancel - go back without saving
+            go_back!(state)
+        else
+            # Save form (from any field or save button)
+            mode = state.current_screen == TODO_ADD ? :add : :edit
+            save_todo_form!(state, mode)
+        end
         return nothing
     end
 

@@ -791,6 +791,67 @@ include("tui_test_helpers.jl")
             # Should have created the todo
             @test length(list_todos(state.db)) == initial_count + 1
         end
+
+        @testset "Form Input - Button Navigation (BUG-009)" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_field_index = TODO_FORM_SAVE_INDEX  # On Save button (index 7)
+
+            # Tab should navigate from Save to Cancel
+            handle_todo_form_input!(state, :tab)
+            @test state.form_field_index == TODO_FORM_CANCEL_INDEX
+
+            # Tab at Cancel should stay at Cancel (boundary)
+            handle_todo_form_input!(state, :tab)
+            @test state.form_field_index == TODO_FORM_CANCEL_INDEX
+
+            # Shift+Tab should go back to Save
+            handle_todo_form_input!(state, :shift_tab)
+            @test state.form_field_index == TODO_FORM_SAVE_INDEX
+        end
+
+        @testset "Form Input - Enter on Cancel Button (BUG-009)" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            state.previous_screen = MAIN_LIST
+            state.form_field_index = TODO_FORM_CANCEL_INDEX  # On Cancel button (index 8)
+            state.form_fields = Dict{Symbol,String}(
+                :title => "Should not be saved",
+                :description => "",
+                :status => "pending",
+                :priority => "2",
+                :start_date => "",
+                :due_date => "",
+                :project_id => "",
+                :category_id => ""
+            )
+            state.form_errors = Dict{Symbol,String}()
+
+            initial_count = length(list_todos(state.db))
+
+            # Enter on Cancel should go back without saving
+            handle_todo_form_input!(state, :enter)
+
+            # Should NOT have created the todo
+            @test length(list_todos(state.db)) == initial_count
+
+            # Should go back to previous screen
+            @test state.current_screen == MAIN_LIST
+        end
+
+        @testset "Form Rendering - Cancel Button Highlight (BUG-009)" begin
+            state = create_test_state()
+            state.current_screen = TODO_ADD
+            reset_form!(state)
+            state.form_field_index = TODO_FORM_CANCEL_INDEX  # On Cancel button
+
+            output = render_todo_form(state, :add)
+            output_str = string(output)
+
+            # Cancel should be highlighted (with cyan bold styling indicator ►)
+            @test contains(output_str, "► [Cancel]")
+        end
     end
 
     # =========================================================================

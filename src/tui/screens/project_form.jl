@@ -14,6 +14,9 @@ const PROJECT_FORM_FIELD_COUNT = 3
 """Field index for Save button (after all form fields)."""
 const PROJECT_FORM_SAVE_INDEX = 4
 
+"""Field index for Cancel button (after Save button)."""
+const PROJECT_FORM_CANCEL_INDEX = 5
+
 """Keyboard shortcuts for project form screen."""
 const PROJECT_FORM_SHORTCUTS = [
     ("Tab/↓", "Next Field"),
@@ -203,6 +206,8 @@ function render_project_form(state::AppState, mode::Symbol)::String
     # Save/Cancel buttons indicator
     if state.form_field_index == PROJECT_FORM_SAVE_INDEX
         push!(lines, "{cyan bold}► [Save]{/cyan bold}    [Cancel]")
+    elseif state.form_field_index == PROJECT_FORM_CANCEL_INDEX
+        push!(lines, "  [Save]    {cyan bold}► [Cancel]{/cyan bold}")
     else
         push!(lines, "  {dim}[Save]    [Cancel]{/dim}")
     end
@@ -262,8 +267,8 @@ function handle_project_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Quit - only when on save button (index 4), not in text fields
-    if key == KEY_QUIT && idx == PROJECT_FORM_SAVE_INDEX
+    # Quit - only when on buttons (Save or Cancel), not in text fields
+    if key == KEY_QUIT && idx > PROJECT_FORM_FIELD_COUNT
         state.running = false
         return nothing
     end
@@ -275,7 +280,7 @@ function handle_project_form_input!(state::AppState, key)::Nothing
 
     # Navigate to next field
     if key == KEY_TAB || key == KEY_DOWN
-        if idx < PROJECT_FORM_SAVE_INDEX
+        if idx < PROJECT_FORM_CANCEL_INDEX
             state.form_field_index += 1
         end
         return nothing
@@ -289,10 +294,16 @@ function handle_project_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Enter - save form (from any field or save button)
+    # Enter - save form or cancel based on button
     if key == KEY_ENTER
-        mode = state.current_screen == PROJECT_ADD ? :add : :edit
-        save_project_form!(state, mode)
+        if idx == PROJECT_FORM_CANCEL_INDEX
+            # Cancel - go back without saving
+            go_back!(state)
+        else
+            # Save form (from any field or save button)
+            mode = state.current_screen == PROJECT_ADD ? :add : :edit
+            save_project_form!(state, mode)
+        end
         return nothing
     end
 

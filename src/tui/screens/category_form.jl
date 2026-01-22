@@ -14,6 +14,9 @@ const CATEGORY_FORM_FIELD_COUNT = 2
 """Field index for Save button (after all form fields)."""
 const CATEGORY_FORM_SAVE_INDEX = 3
 
+"""Field index for Cancel button (after Save button)."""
+const CATEGORY_FORM_CANCEL_INDEX = 4
+
 """Keyboard shortcuts for category form screen."""
 const CATEGORY_FORM_SHORTCUTS = [
     ("Tab/↓", "Next Field"),
@@ -197,6 +200,8 @@ function render_category_form(state::AppState, mode::Symbol)::String
     # Save/Cancel buttons indicator
     if state.form_field_index == CATEGORY_FORM_SAVE_INDEX
         push!(lines, "{cyan bold}► [Save]{/cyan bold}    [Cancel]")
+    elseif state.form_field_index == CATEGORY_FORM_CANCEL_INDEX
+        push!(lines, "  [Save]    {cyan bold}► [Cancel]{/cyan bold}")
     else
         push!(lines, "  {dim}[Save]    [Cancel]{/dim}")
     end
@@ -254,8 +259,8 @@ function handle_category_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Quit - only when on save button (index 3), not in text fields
-    if key == KEY_QUIT && idx == CATEGORY_FORM_SAVE_INDEX
+    # Quit - only when on buttons (Save or Cancel), not in text fields
+    if key == KEY_QUIT && idx > CATEGORY_FORM_FIELD_COUNT
         state.running = false
         return nothing
     end
@@ -267,7 +272,7 @@ function handle_category_form_input!(state::AppState, key)::Nothing
 
     # Navigate to next field
     if key == KEY_TAB || key == KEY_DOWN
-        if idx < CATEGORY_FORM_SAVE_INDEX
+        if idx < CATEGORY_FORM_CANCEL_INDEX
             state.form_field_index += 1
         end
         return nothing
@@ -281,10 +286,16 @@ function handle_category_form_input!(state::AppState, key)::Nothing
         return nothing
     end
 
-    # Enter - save form (from any field or save button)
+    # Enter - save form or cancel based on button
     if key == KEY_ENTER
-        mode = state.current_screen == CATEGORY_ADD ? :add : :edit
-        save_category_form!(state, mode)
+        if idx == CATEGORY_FORM_CANCEL_INDEX
+            # Cancel - go back without saving
+            go_back!(state)
+        else
+            # Save form (from any field or save button)
+            mode = state.current_screen == CATEGORY_ADD ? :add : :edit
+            save_category_form!(state, mode)
+        end
         return nothing
     end
 
