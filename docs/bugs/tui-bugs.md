@@ -18,6 +18,7 @@
 | BUG-006 | Error navigating past last submenu item | HIGH | MERGED (PR #13) | bugfix/tui-form-navigation |
 | BUG-007 | Todo edit screen has severe rendering artifacts | HIGH | MERGED (PR #20) | bugfix/tui-edit-rendering |
 | BUG-008 | Crash when pressing up arrow at top of radio selection | HIGH | VERIFIED | bugfix/radio-navigation-boundary |
+| BUG-009 | Cannot navigate from [Save] to [Cancel] button on forms | MEDIUM | VERIFIED | bugfix/form-button-navigation |
 
 **Note:** BUG-001 and BUG-002 share the same root cause (TTY detection failing in Docker).
 **Note:** BUG-005 and BUG-006 are related - BUG-006 occurs as a consequence of BUG-005's incorrect navigation behavior.
@@ -513,6 +514,83 @@ Added regression test in `test/test_tui_screens.jl` to verify boundary behavior.
 
 ---
 
+## BUG-009: Cannot navigate from [Save] to [Cancel] button on forms
+
+**Priority:** MEDIUM
+**Status:** VERIFIED
+**Discovered:** 2026-01-22 during manual testing
+**Fixed:** 2026-01-22
+**Verified:** 2026-01-22
+**Branch:** bugfix/form-button-navigation
+
+### Description
+On the "Add New Todo" form (and likely other forms), when the user navigates down to the [Save] button, pressing Tab or arrow keys does not cycle to the [Cancel] button. The user is stuck on [Save] with no way to reach [Cancel] via keyboard navigation.
+
+### Steps to Reproduce
+1. Start TUI: `julia --project=. -e 'using TodoList; run_tui()'`
+2. Press 'a' to add a new todo
+3. Press Tab repeatedly to navigate down to the [Save] button
+4. Press Tab or Down arrow
+5. Observe: Nothing happens, cursor stays on [Save]
+
+### Expected Behavior
+Pressing Tab while on [Save] should cycle to [Cancel]. This is consistent with the established navigation pattern:
+- **Tab/Shift+Tab**: Navigate between form fields (including buttons)
+- **Arrow keys**: Cycle through options within the current field/button group
+
+### Actual Behavior
+Nothing happens. The user cannot reach [Cancel] via keyboard navigation.
+
+### Workaround
+User can press Esc or 'q' to cancel and return to the previous screen, but this is not discoverable and bypasses the explicit [Cancel] button.
+
+### Screenshots
+N/A
+
+### Environment
+- Julia 1.12+
+- Running in Docker container
+
+### Root Cause Analysis
+The bug is in `src/tui/screens/todo_form.jl`. The Tab navigation logic at lines 375-378 stops at `TODO_FORM_SAVE_INDEX` (7):
+
+```julia
+if key == KEY_TAB
+    if idx < TODO_FORM_SAVE_INDEX
+        state.form_field_index += 1
+    end
+end
+```
+
+There is no `TODO_FORM_CANCEL_INDEX` defined, and the buttons are treated as a single field at index 7. Tab does nothing when at index 7, so navigation cannot proceed to Cancel.
+
+The same issue exists in `project_form.jl` and `category_form.jl`.
+
+### Fix Applied
+Added `*_FORM_CANCEL_INDEX` constants to all three form files and updated:
+
+1. **todo_form.jl:**
+   - Added `TODO_FORM_CANCEL_INDEX = 8`
+   - Updated Tab boundary check from `TODO_FORM_SAVE_INDEX` to `TODO_FORM_CANCEL_INDEX`
+   - Updated render to highlight [Cancel] when `form_field_index == TODO_FORM_CANCEL_INDEX`
+   - Updated Enter handling: Enter on Cancel button calls `go_back!(state)`
+
+2. **project_form.jl:**
+   - Added `PROJECT_FORM_CANCEL_INDEX = 5`
+   - Same updates as todo_form.jl
+
+3. **category_form.jl:**
+   - Added `CATEGORY_FORM_CANCEL_INDEX = 4`
+   - Same updates as category_form.jl
+
+4. **TodoList.jl:**
+   - Exported the new `*_FORM_CANCEL_INDEX` constants
+
+5. **test_tui_screens.jl:**
+   - Added regression tests for button navigation and Enter on Cancel
+
+---
+
 ## Resolution Plan
 
 ### Recommended Fix Order
@@ -569,3 +647,7 @@ Added regression test in `test/test_tui_screens.jl` to verify boundary behavior.
 | 2026-01-22 | BUG-008 documented | Crash when pressing up arrow at top of radio selection. Initially thought same root cause as BUG-006. |
 | 2026-01-22 | BUG-008 FIXED | Actual root cause: STATUS_OPTIONS name collision between filter_menu.jl and todo_form.jl. Renamed to TODO_STATUS_OPTIONS/TODO_PRIORITY_OPTIONS. All tests pass (977/977). |
 | 2026-01-22 | BUG-008 VERIFIED | All 977 tests pass. Fix correctly separates constants. Regression test covers boundary behavior. |
+| 2026-01-22 | BUG-009 documented | Cannot navigate from [Save] to [Cancel] button on forms. Tab/arrow keys do nothing at [Save]. |
+| 2026-01-22 | BUG-009 IN_PROGRESS | Starting fix. Root cause: Tab stops at SAVE_INDEX with no CANCEL_INDEX defined. |
+| 2026-01-22 | BUG-009 FIXED | Added CANCEL_INDEX constants to all form files. Tab navigates Save→Cancel, Enter on Cancel goes back. All tests pass (976/976). |
+| 2026-01-22 | BUG-009 VERIFIED | All 976 tests pass. Fix verified in todo_form.jl, project_form.jl, category_form.jl. CANCEL_INDEX exported from TodoList.jl. Regression tests confirm navigation. |
