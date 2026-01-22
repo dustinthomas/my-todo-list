@@ -1,158 +1,107 @@
 # Work Units: [Feature Name]
 
-**Feature:** [Feature description]
-**Feature Spec:** docs/features/[FEATURE].md
+**Spec:** docs/features/[FEATURE].md
 **Plan:** plans/[FEATURE].md
 **Created:** [YYYY-MM-DD]
 **Status:** Not Started | In Progress | Complete
 
 ---
 
-## Overview
+## Micro-Units Principle
 
-This file tracks testable work units derived from the implementation plan. Each unit is:
-- **Self-contained:** Can be implemented, tested, and merged independently
-- **PR-sized:** Results in one pull request
-- **Testable:** Has clear acceptance criteria that can be verified
+> **Keep units as small as logically possible.** Each unit = smallest coherent change that can be independently tested and merged. Prefer many small PRs over few large ones.
 
 ## Progress Summary
 
-| Unit | Name | Status | Branch | PR |
-|------|------|--------|--------|-----|
-| 1 | [Name] | PENDING | - | - |
-| 2 | [Name] | PENDING | - | - |
-| 3 | [Name] | PENDING | - | - |
+| Unit | Name | Status | PR |
+|------|------|--------|-----|
+| 1 | [Name] | PENDING | - |
+| 2 | [Name] | PENDING | - |
+| 3 | [Name] | PENDING | - |
 
-**Status Legend:**
-- `PENDING` - Not started
-- `IN_PROGRESS` - Implementer working on it
-- `IMPLEMENTED` - Code complete, ready for verification
-- `VERIFIED` - Tester approved
-- `MERGED` - PR merged to main
-- `BLOCKED` - Waiting on dependency
-- `FAILED` - Verification failed, needs fixes
+**Status:** `PENDING` → `IN_PROGRESS` → `IMPLEMENTED` → `VERIFIED` → `MERGED`
 
 ---
 
 ## Work Units
 
-### Unit 1: [Descriptive Name]
+### Unit 1: [Name]
 
 **Status:** PENDING
-**Branch:** `feature/[feature-name]-unit-1`
-**Plan Steps:** [1, 2] *(reference step numbers from plan)*
+**Branch:** `feature/[name]-unit-1`
+**Plan Steps:** [1, 2]
 **Depends On:** None
 
 **Scope:**
-- [Brief description of what this unit accomplishes]
-- [What files will be created/modified]
+- [What this unit delivers]
+- [Files to create/modify]
 
 **Acceptance Criteria:**
-- [ ] [Specific, testable criterion]
-- [ ] [Specific, testable criterion]
-- [ ] [Specific, testable criterion]
-- [ ] All unit tests pass
-- [ ] No regressions in existing tests
-
-**Estimated Files:** [N] files, ~[N] lines
-
-**Notes:**
-- [Any special considerations for this unit]
+- [ ] [Specific criterion]
+- [ ] [Specific criterion]
+- [ ] All tests pass
 
 ---
 
-### Unit 2: [Descriptive Name]
+### Unit 2: [Name]
 
 **Status:** PENDING
-**Branch:** `feature/[feature-name]-unit-2`
-**Plan Steps:** [3, 4, 5]
+**Branch:** `feature/[name]-unit-2`
+**Plan Steps:** [3, 4]
 **Depends On:** Unit 1
 
 **Scope:**
-- [Brief description]
+- [What this unit delivers]
 
 **Acceptance Criteria:**
 - [ ] [Criterion]
-- [ ] [Criterion]
-- [ ] All unit tests pass
-- [ ] No regressions in existing tests
-
-**Estimated Files:** [N] files, ~[N] lines
-
-**Notes:**
-- [Notes]
+- [ ] All tests pass
 
 ---
 
-### Unit 3: [Descriptive Name]
+### Unit 3: [Name]
 
 **Status:** PENDING
-**Branch:** `feature/[feature-name]-unit-3`
-**Plan Steps:** [6, 7]
-**Depends On:** Unit 1, Unit 2
+**Branch:** `feature/[name]-unit-3`
+**Plan Steps:** [5, 6]
+**Depends On:** Unit 2
 
 **Scope:**
-- [Brief description]
+- [What this unit delivers]
 
 **Acceptance Criteria:**
 - [ ] [Criterion]
-- [ ] [Criterion]
-- [ ] All unit tests pass
-- [ ] No regressions in existing tests
-
-**Estimated Files:** [N] files, ~[N] lines
+- [ ] All tests pass
 
 ---
 
 ## Session Log
 
-Track work sessions for handoff context:
-
-### [YYYY-MM-DD] - [Role]: [Unit N]
-**Session:** [Implementer/Tester/Refactorer]
+### [YYYY-MM-DD] - [Role]: Unit [N]
 **Result:** [Complete/Partial/Blocked]
 **Notes:**
-- [What was accomplished]
-- [Any issues encountered]
-- [Handoff notes for next session]
+- [What was done]
+- [Handoff notes]
 
 ---
 
-## Issues & Fixes
+## Workflow
 
-Track issues found during verification:
-
-### Issue #1: [Title]
-**Found in:** Unit [N] verification
-**Severity:** [High/Medium/Low]
-**Description:** [What's wrong]
-**Resolution:**
-- [ ] Fix in Unit [N] (minor fix)
-- [ ] Create fix plan (design issue)
+```
+For each unit:
+1. CLEAR CONTEXT
+2. /implement-step docs/features/THIS-FILE.md [N]
+3. CLEAR CONTEXT
+4. /verify-ship docs/features/THIS-FILE.md [N]
+   (combines verification + PR creation)
+5. After PR merged → next unit
+```
 
 ---
 
 ## Completion Checklist
 
-Before marking feature complete:
-
-- [ ] All units have status MERGED
+- [ ] All units MERGED
 - [ ] Full test suite passes
-- [ ] Manual verification complete (if TUI)
-- [ ] Documentation updated
-- [ ] CLAUDE.md lessons learned updated (if applicable)
-
----
-
-**Workflow Reminder:**
-
-```
-For each unit:
-1. CLEAR CONTEXT
-2. /implement-step docs/features/THIS-FILE.md Unit N
-3. CLEAR CONTEXT
-4. /verify-feature docs/features/THIS-FILE.md Unit N
-5. If PASS: /simplify (optional) then /commit-push-pr
-6. If FAIL: Back to step 1 (or /plan-feature for design fix)
-7. After PR merged: Repeat for next unit
-```
+- [ ] Plan file milestones updated
+- [ ] Documentation updated (if needed)

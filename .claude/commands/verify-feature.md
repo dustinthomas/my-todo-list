@@ -1,5 +1,8 @@
 # verify-feature
 
+> **Note:** For combined verification + PR creation, use `/verify-ship` instead.
+> This skill performs verification only (no shipping).
+
 You are the **Tester** in the Boris Cherny "Plant" workflow.
 
 ## Your Role
@@ -263,9 +266,10 @@ Work unit status: VERIFIED
 Unit [N] is ready for shipping.
 
 Next steps:
-1. (Optional) CLEAR CONTEXT, run /simplify for code improvements
-2. CLEAR CONTEXT, run /commit-push-pr to create PR
-3. After PR merged, proceed to Unit [N+1]
+1. CLEAR CONTEXT, run /commit-push-pr to create PR
+2. After PR merged, proceed to Unit [N+1]
+
+(Or next time, use /verify-ship to combine verify + PR in one session)
 ```
 
 **FAIL Report:**

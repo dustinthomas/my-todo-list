@@ -228,9 +228,12 @@ Bug status updated: FIXED
 
 Next steps:
 1. CLEAR THIS SESSION
-2. Run: /commit-push-pr
-   (or if you want separate verification first)
-3. Run verification session to manually test and mark VERIFIED
+2. Run: /verify BUG-XXX
+   (verifies fix and marks VERIFIED)
+3. Then: /commit-push-pr to create PR
+
+   OR if confident in fix:
+   /commit-push-pr directly, verify after merge
 
 IMPORTANT: Do not continue to fix unrelated bugs.
 ```
@@ -397,12 +400,9 @@ Bug status updated: BUG-001 FIXED, BUG-002 FIXED
 
 Next steps:
 1. CLEAR THIS SESSION
-2. Run: /commit-push-pr
-
-After PR is merged:
-3. CLEAR CONTEXT
-4. Run verification session to manually test in Docker
-5. Mark bugs as VERIFIED after confirming fix works
+2. Run: /verify BUG-001
+   (will verify fix and mark VERIFIED)
+3. Run: /commit-push-pr to create PR
 ```
 
 ## Remember

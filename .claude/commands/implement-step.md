@@ -86,10 +86,16 @@ A **Work Unit** is:
     - Change status: `IN_PROGRESS` → `IMPLEMENTED`
     - Update session log with completion notes
 
-11. **Report Completion and Hand Off**
+11. **Update Plan File (if milestone boundary)**
+    - Check if this unit completes a milestone in `plans/FEATURE.md`
+    - If yes, update milestone status: `🔄 IN PROGRESS` → `✅ DONE`
+    - Add completion date to milestone row
+    - The plan file is a living document - keep it current
+
+12. **Report Completion and Hand Off**
     - Summarize what was done
     - Provide test results
-    - Hand off to tester
+    - Hand off to verifier
 
 ## Important Rules
 
@@ -227,7 +233,12 @@ Work unit status updated: IMPLEMENTED
 
 Next steps:
 1. CLEAR THIS SESSION (use /clear or start new terminal)
-2. Run: /verify-feature docs/features/FEATURE-units.md N
+2. Run: /verify-ship docs/features/FEATURE-units.md N
+   (combines verification + PR creation)
+
+   OR for separate steps:
+   /verify docs/features/FEATURE-units.md N
+   then /commit-push-pr
 
 IMPORTANT: Do not continue to the next unit.
 Verification must happen before proceeding.
@@ -413,7 +424,7 @@ Work unit status updated: IMPLEMENTED
 
 Next steps:
 1. CLEAR THIS SESSION
-2. Run: /verify-feature docs/features/tui-components-units.md 2
+2. Run: /verify-ship docs/features/tui-components-units.md 2
 ```
 
 ## Remember

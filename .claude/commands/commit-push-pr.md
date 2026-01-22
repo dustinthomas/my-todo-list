@@ -1,5 +1,8 @@
 # commit-push-pr
 
+> **Note:** For feature work, prefer `/verify-ship` which combines verification + shipping.
+> This skill remains available for bug fixes after `/verify` or standalone use.
+
 You are in **Ship Mode** - preparing to create a commit and pull request.
 
 ## Your Role
